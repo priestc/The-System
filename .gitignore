@@ -1,0 +1,4 @@
+*.pyc
+manage.py
+.tp_env/
+local_settings.py
