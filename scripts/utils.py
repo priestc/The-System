@@ -8,7 +8,7 @@ def clean(value):
     Strip out characters that are not allowed in some filesystems
     """
     #print value
-    return re.sub(r'[*|\/:"<>?]', '', value)
+    return re.sub(r'[*|\/:"<>?]', '', value).encode('ascii','replace')
 
 def is_image(filepath):
     """

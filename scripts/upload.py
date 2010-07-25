@@ -13,6 +13,10 @@ is then uploaded to the project's master server
 
 """
 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+
 import os
 import shutil
 import sys
@@ -51,7 +55,7 @@ parser.add_option("--test",
                   dest="test",
                   action="store_true",
                   default=False,
-                  help="Test archive")
+                  help="Outputs archive to the current working directory for inspection, and skips upload")
 
 parser.add_option("--bootleg",
                   dest="bootleg",
@@ -192,7 +196,7 @@ def get_tags_dict(path):
 
 if __name__ == '__main__':
 
-    # move all files to the temp directory
+    # create temp dirs
 
     base_tmp = tempfile.mkdtemp()
     tmp_mp3 = os.path.join(base_tmp, 'mp3')
@@ -201,13 +205,16 @@ if __name__ == '__main__':
     os.mkdir(tmp_mp3)
     os.mkdir(tmp_other)
     
+    # move all files to the temp directory
+    
     for root, dirs, files in os.walk(path):
         for f in files:
             full_path = os.path.join(root, f)
             if os.stat(full_path).st_size < 104857600:
                 if full_path.endswith('.mp3'):
                     tmp = tmp_mp3
-                elif full_path.endswith('.log') or f.startswith('folder.'):
+                elif full_path.endswith('.log') or f.startswith('folder.') and \
+                        is_image(f):
                     tmp = tmp_other
                 else:
                     print full_path
@@ -247,29 +254,28 @@ if __name__ == '__main__':
             
     print "------------"
     
-    # if the test option is not used, the temp file will automatically
+    # if the test option is ~not~ used, the temp file will automatically
     # delete itself when the script terminates
     delete = not options.test
     tmpzip = tempfile.NamedTemporaryFile(delete=delete)
     z = zipfile.ZipFile(tmpzip, 'w', zipfile.ZIP_STORED)
     
-    # iterate until we get a MP3 file and read it's album/date/artist values
-    # so we know what to name the folder on the zip file
+    # add all mp3 files to the zip archive
     
     for f in mp3_to_upload:
         tags = get_tags_dict(f)
         print tags
-        album = clean(tags['album']).encode('ascii','replace')
-        artist = clean(tags['artist']).encode('ascii','replace')
+        album = clean(tags['album'])
+        artist = clean(tags['artist'])
         preset = acceptable[tags['preset']]
-        date = clean(str(tags['date'])).encode('ascii','replace')
+        date = clean(str(tags['date']))
         
         path_in_zip = "{artist} - ({date}) {album} [{preset}]"\
         .format(album=album, artist=artist, date=date, preset=preset)
         
-        track = tags.get('track', 0).encode('ascii','replace')
+        track = tags.get('track', 0)
         disc = tags.get('disc', "")
-        title = clean(tags.get('title', 'title')).encode('ascii','replace')
+        title = clean(tags.get('title', 'title'))
         
         track = "{track:02d}".format(track=int(track))
         
@@ -288,7 +294,7 @@ if __name__ == '__main__':
         s = os.path.join(path_in_zip, file_on_zip)
         z.write(f, s)
 
-    #z.setpassword('nmp3s')
+    #z.setpassword('poo')
     
     ################ now do the upload
     
