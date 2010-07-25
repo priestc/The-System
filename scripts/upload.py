@@ -2,9 +2,8 @@
 
 import os
 import shutil
+import sys
 import tempfile
-import urllib
-import urllib2
 import zipfile
 
 from utils import *
@@ -13,7 +12,7 @@ from optparse import OptionParser
 from types import ListType
 
 import mutagen
-from multipart import MultiPartForm
+from multipart import send_request
 
 ############################
 
@@ -35,6 +34,12 @@ parser.add_option('-m', "--album_meta",
                   dest="album_meta",
                   help="Manually set the album neta value (ignore ID3 tags)")
 
+parser.add_option("--test",
+                  dest="test",
+                  action="store_true",
+                  default=False,
+                  help="Test archive")
+
 parser.add_option("--bootleg",
                   dest="bootleg",
                   action="store_true",
@@ -48,10 +53,7 @@ parser.add_option("--bootleg",
 try:
     path = args[0]
 except IndexError:
-    path = None
-
-# if no path was specified, then use the current working directory
-if not path:
+    # if no path was specified, then use the current working directory
     path = os.getcwd()
 
 ############################
@@ -59,33 +61,17 @@ if not path:
 
 # all mp3 presets that are allowed. Also, mappings to a shorthand name
 acceptable = {"--alt-preset extreme": "-ape",
-	          "--alt-preset standard": "-aps",
-	          "--alt-preset fast standard": "-apfs",
-	          "--alt-preset fast extreme": "-apfe",
-	          "--alt-preset insane": "-api",
-	          "-V 0": "-V0",
-	          "-V 0 --vbr-new": "-V0",
-	          "-V 1": "-V1",
-	          "-V 1 --vbr-new": "-V1",
-	          "-V 2": "-V2",
+              "--alt-preset standard": "-aps",
+              "--alt-preset fast standard": "-apfs",
+              "--alt-preset fast extreme": "-apfe",
+              "--alt-preset insane": "-api",
+              "-V 0": "-V0",
+              "-V 0 --vbr-new": "-V0",
+              "-V 1": "-V1",
+              "-V 1 --vbr-new": "-V1",
+              "-V 2": "-V2",
               "-V 2 --vbr-new": "-V2",
 }
-
-
-############################
-############################
-
-tmp = tempfile.mkdtemp()
-    
-# only files less than 100MB and no directories
-files = [f for f in os.listdir(path)
-            if os.path.isfile(f) and os.stat(path).st_size < 104857600]
-
-for f in files[:500]:
-    # move all files to the subdirectory
-    # (limit to 500 incase of a user error)
-    subdir_path = os.path.join(tmp, os.path.basename(f))
-    shutil.copyfile(f, subdir_path)
 
 ############################
 ############################
@@ -129,31 +115,19 @@ def is_appropriate(filepath, is_bootleg):
                 return "MISSING TAGS"
         else:
             return "NOT VX"
-        
-    else:
-        if filename.endswith(".log"):
-            # Logfiles get included
-            return "ADD"
-        
-        elif filename.startswith("folder."):
-            if is_image(filepath):
-                # is a correct image
-                return "ADD"
-            else:
-                return "NOT VALID IMAGE"
             
     return "IGNORE"
 
 def set_tag(path, tag, value):
-    pass
+    raise NotImplementedError
 
 
 def append_tag(f, tag, value):
-    return None
+    raise NotImplementedError
 
-def get_tags_dict(path):
+def get_tags_object(path):
     """
-    Returns a dict of all the tags in the file (if it has any)
+    Get the tag object. Used for getting and setting tag information
     """
     
     try:
@@ -161,26 +135,42 @@ def get_tags_dict(path):
         # (could throw any number of errors)
         data = mutagen.File(path)
     except:
-	    # (this catches all errors because other filetypes might
-	    # raise all sorts of crap)
+        # (this catches all errors because other filetypes might
+        # raise all sorts of crap)
 		return None
                
     if isinstance(data, mutagen.mp3.MP3):
-		try: # check if it has APEv2 tags (these take priority)
-			ape_data = mutagen.apev2.APEv2(path)
-			setattr(ape_data, "info", data.info)
-			tags = APE(ape_data).info
-		except: # otherwise, read ID3v2 followed by ID3v1
-			tags = MP3(data).info
-			
+        try: # check if it has APEv2 tags (these take priority)
+            ape_data = mutagen.apev2.APEv2(path)
+            setattr(ape_data, "info", data.info)
+            return ape_data, "APE"
+        except: # otherwise, read ID3v2 followed by ID3v1
+            return data, "ID3"
+
     else:
         return None
+
+def get_tags_dict(path):
+    """
+    Returns a dict of all the tags in the file (if it has any)
+    """
     
+    data, tag_type = get_tags_object(path)
+    
+    if tag_type == "APE":
+        tags = APE(data).info
+    elif tag_type == 'ID3':
+        tags = MP3(data).info
 
     if "/" in tags['track']:
         t = tags['track']
         index = t.find('/')
         tags['track'] = t[:index]
+        
+    if "/" in tags['disc']:
+        t = tags['disc']
+        index = t.find('/')
+        tags['disc'] = t[:index]
         
     return tags
          
@@ -189,14 +179,35 @@ def get_tags_dict(path):
 
 if __name__ == '__main__':
 
-    # list of all files that will be added to the zip then uploaded
-    to_upload = []
+    # move all files to the temp directory
 
-    #files that do not pass the validation (not MP3 or not -V2, -V1 or -V0)
-    failed = []
+    base_tmp = tempfile.mkdtemp()
+    tmp_mp3 = os.path.join(base_tmp, 'mp3')
+    tmp_other = os.path.join(base_tmp, 'other')
     
-    # get all filenames in the temp dir (where we have already copied all files to)
-    for filename in os.listdir(tmp):
+    os.mkdir(tmp_mp3)
+    os.mkdir(tmp_other)
+    
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            full_path = os.path.join(root, f)
+            if os.stat(full_path).st_size < 104857600:
+                if full_path.endswith('.mp3'):
+                    tmp = tmp_mp3
+                elif full_path.endswith('.log') or f.startswith('folder.'):
+                    tmp = tmp_other
+                else:
+                    print full_path
+                temp_path = os.path.join(tmp, f)
+                shutil.copyfile(full_path, temp_path)
+    
+    # list of all files that will be added to the zip
+    mp3_to_upload = []
+    other_to_upload = []
+    
+    # get all filenames in the mp3 temp dir
+    # (where we have already copied all files to)
+    for filename in os.listdir(tmp_mp3):
         filepath = os.path.join(tmp, filename)
         
         if options.artist:
@@ -212,90 +223,87 @@ if __name__ == '__main__':
         
         if ret == 'ADD':
             print 'add:', filename
-            to_upload.append(filepath)
+            mp3_to_upload.append(filepath)
             
         elif ret == 'IGNORE':
             print "ignore:", filename
                   
         else:
             print "rejected:", filename, ret
-            failed.append(filename)
+            sys.exit()
             
     print "------------"
     
-    tmpzip = tempfile.TemporaryFile()
+    # if the test option is not used, the temp file will automatically
+    # delete itself when the script terminates
+    delete = not options.test
+    tmpzip = tempfile.NamedTemporaryFile(delete=delete)
     z = zipfile.ZipFile(tmpzip, 'w', zipfile.ZIP_STORED)
     
     # iterate until we get a MP3 file and read it's album/date/artist values
     # so we know what to name the folder on the zip file
-    # this extra iteration is required because not all files will necessairly
-    # be MP3 files
     
-    for f in to_upload:
+    for f in mp3_to_upload:
         tags = get_tags_dict(f)
-        if tags:
-            album = clean(tags['album']).encode('ascii','replace')
-            artist = clean(tags['artist']).encode('ascii','replace')
-            preset = acceptable[tags['preset']]
-            date = clean(str(tags['date'])).encode('ascii','replace')
-            
-            path_in_zip = "{artist} - ({date}) {album} [{preset}]"\
-            .format(album=album, artist=artist, date=date, preset=preset)
-            break
-    
-    # now go through all appropriate files and add them to a zip, maning them
-    # according to their tags
-    
-    for f in to_upload:
-        tags = get_tags_dict(f)
-        if tags:
-            track = tags.get('track', 0).encode('ascii','replace')
-            disc = tags.get('disc', "")
-            title = clean(tags.get('title', 'title')).encode('ascii','replace')
-            
-            track = "{track:02d}".format(track=int(track))
-            
-            if disc:
-                track = "{disc}{track}".format(disc=int(disc), track=track)
-            
-            file_on_zip = "{track} - {title}.mp3".format(title=title, track=track)
-
-            
-        else:
-            # not an MP3, use original filename on zip
-            file_on_zip = os.path.basename(f)
+        print tags
+        album = clean(tags['album']).encode('ascii','replace')
+        artist = clean(tags['artist']).encode('ascii','replace')
+        preset = acceptable[tags['preset']]
+        date = clean(str(tags['date'])).encode('ascii','replace')
         
+        path_in_zip = "{artist} - ({date}) {album} [{preset}]"\
+        .format(album=album, artist=artist, date=date, preset=preset)
+        
+        track = tags.get('track', 0).encode('ascii','replace')
+        disc = tags.get('disc', "")
+        title = clean(tags.get('title', 'title')).encode('ascii','replace')
+        
+        track = "{track:02d}".format(track=int(track))
+        
+        if disc:
+            track = "{disc}{track}".format(disc=int(disc), track=track)
+        
+        file_on_zip = "{track} - {title}.mp3".format(title=title, track=track)
+            
         s = os.path.join(path_in_zip, file_on_zip)
         z.write(f, s)
+            
+    # now go through all non-mp3 files and add them to the zip
+    
+    for f in other_to_upload:
+        file_on_zip = os.path.basename(f)
+        s = os.path.join(path_in_zip, file_on_zip)
+        z.write(f, s)
+
+    #z.setpassword('nmp3s')
     
     ################ now do the upload
     
-    if to_upload:
-        mpform = MultiPartForm()
-        mpform.add_field('artist', artist)
-        mpform.add_field('album', album)
-        mpform.add_field('album_meta', options.album_meta or "")
-        mpform.add_file('file', 'album.zip', tmpzip)
-        
-        body = str(mpform)
-        
-        request = urllib2.Request(url)
-        request.add_header('User-agent', 'The Project Command Line Client')
-        request.add_header('Content-type', form.get_content_type())
-        request.add_header('Content-length', len(body))
-        request.add_data(body)
-        
-        print urllib2.urlopen(request).read()
+    if mp3_to_upload and not options.test:
+        send_request(tmpzip, artist, album, options.album_meta, url)
+    elif options.test:
+        print "No upload, testing only"
     else:
         print "nothing to upload, all files rejected"
+        sys.exit()
         
     ############### cleanup
 
     z.close()
-    shutil.rmtree(tmp)
     
+    if options.test:
+        tmpzip.seek(0)
+        f = open('test.zip', 'w')
+        f.writelines(tmpzip.readlines())
+        os.remove(tmpzip.name)
     
-    
-    
-        
+    shutil.rmtree(base_tmp)
+
+
+
+
+
+
+
+
 

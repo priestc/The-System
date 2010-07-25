@@ -68,29 +68,22 @@ class MultiPartForm(object):
         flattened.append('')
         return '\r\n'.join(flattened)
 
-if __name__ == '__main__':
-    # Create the form with simple fields
-    form = MultiPartForm()
-    form.add_field('firstname', 'Doug')
-    form.add_field('lastname', 'Hellmann')
+def send_request(tmpzip, artist, album, meta, url):
+    import urllib2
     
-    # Add a fake file
-    form.add_file('biography', 'bio.txt', 
-                  fileHandle=StringIO('Python developer and blogger.'))
-
-    # Build the request
-    request = urllib2.Request('http://localhost:8080/')
-    request.add_header('User-agent', 'PyMOTW (http://www.doughellmann.com/PyMOTW/)')
-    body = str(form)
-    request.add_header('Content-type', form.get_content_type())
+    mpform = MultiPartForm()
+    mpform.add_field('artist', artist)
+    mpform.add_field('album', album)
+    mpform.add_field('album_meta', meta or "")
+    mpform.add_file('file', 'album.zip', tmpzip)
+    
+    body = str(mpform)
+    
+    request = urllib2.Request(url)
+    request.add_header('User-agent', 'The Project Command Line Client')
+    request.add_header('Content-type', mpform.get_content_type())
     request.add_header('Content-length', len(body))
     request.add_data(body)
-
-    print
-    print 'OUTGOING DATA:'
-    print request.get_data()
-
-    print
-    print 'SERVER RESPONSE:'
+    
     print urllib2.urlopen(request).read()
 
