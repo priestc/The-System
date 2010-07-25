@@ -1,5 +1,18 @@
 #!/usr/bin/env python
 
+"""This script does the following:
+    
+First it takes all files in either the current directory, or the passed in path
+and copies them into a temp folder.
+
+Then it looks at each file and determines if it should be added to the archive
+based on the filename, LAME encoding and tags present.
+
+it then takes all eligible files and adds them to a zip archive. The zip archive
+is then uploaded to the project's master server
+
+"""
+
 import os
 import shutil
 import sys
@@ -162,12 +175,12 @@ def get_tags_dict(path):
     elif tag_type == 'ID3':
         tags = MP3(data).info
 
-    if "/" in tags['track']:
+    if "/" in (tags['track'] or ""):
         t = tags['track']
         index = t.find('/')
         tags['track'] = t[:index]
         
-    if "/" in tags['disc']:
+    if "/" in (tags['disc'] or ""):
         t = tags['disc']
         index = t.find('/')
         tags['disc'] = t[:index]
