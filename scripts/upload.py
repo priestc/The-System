@@ -51,8 +51,8 @@ parser.add_option('-m', "--album_meta",
                   dest="album_meta",
                   help="Manually set the album neta value (ignore ID3 tags)")
 
-parser.add_option("--test",
-                  dest="test",
+parser.add_option("--archive-only",
+                  dest="archive",
                   action="store_true",
                   default=False,
                   help="Outputs archive to the current working directory for inspection, and skips upload")
@@ -136,7 +136,11 @@ def is_appropriate(filepath, is_bootleg):
     return "IGNORE"
 
 def set_tag(path, tag, value):
-
+    """
+    Edit the mp3 in the path's tags to reflect the new value
+    this function works for either ID3 or APE tagged MP3's
+    """
+    
     data, tag_type = get_tags_object(path)
     
     if tag_type == "APE":
@@ -145,8 +149,6 @@ def set_tag(path, tag, value):
         tags = MP3(data)
 
     tags.set_value(tag, value)
-    
-    #raise NotImplementedError
 
 
 def append_tag(f, tag, value):
@@ -164,7 +166,6 @@ def get_tags_object(path):
     except:
         # (this catches all errors because other filetypes might
         # raise all sorts of crap)
-        print "not music file"
         return None
                
     if isinstance(data, mutagen.mp3.MP3):
@@ -176,7 +177,6 @@ def get_tags_object(path):
             return data, "ID3"
 
     else:
-        print "not mp3"
         return None
 
 def get_tags_dict(path):
@@ -271,9 +271,9 @@ if __name__ == '__main__':
     print "------------"
         
     
-    # if the test option is ~not~ used, the temp file will automatically
+    # if the archive option is ~not~ used, the temp file will automatically
     # delete itself when the script terminates
-    delete = not options.test
+    delete = not options.archive
     tmpzip = tempfile.NamedTemporaryFile(delete=delete)
     z = zipfile.ZipFile(tmpzip, 'w', zipfile.ZIP_STORED)
     
@@ -314,10 +314,10 @@ if __name__ == '__main__':
     
     ################ now do the upload
     
-    if mp3_to_upload and not options.test:
+    if mp3_to_upload and not options.archive:
         send_request(tmpzip, artist, album, options.album_meta, url)
-    elif options.test:
-        print "No upload, testing only"
+    elif options.archive:
+        print "No upload, archive only"
     else:
         print "nothing to upload, all files rejected"
         sys.exit()
@@ -326,9 +326,9 @@ if __name__ == '__main__':
 
     z.close()
     
-    if options.test:
+    if options.archive:
         tmpzip.seek(0)
-        f = open('test.zip', 'w')
+        f = open('archive.zip', 'w')
         f.writelines(tmpzip.readlines())
         os.remove(tmpzip.name)
     
