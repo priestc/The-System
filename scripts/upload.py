@@ -136,7 +136,17 @@ def is_appropriate(filepath, is_bootleg):
     return "IGNORE"
 
 def set_tag(path, tag, value):
-    raise NotImplementedError
+
+    data, tag_type = get_tags_object(path)
+    
+    if tag_type == "APE":
+        tags = APE(data)
+    elif tag_type == 'ID3':
+        tags = MP3(data)
+
+    tags.set_value(tag, value)
+    
+    #raise NotImplementedError
 
 
 def append_tag(f, tag, value):
@@ -154,7 +164,8 @@ def get_tags_object(path):
     except:
         # (this catches all errors because other filetypes might
         # raise all sorts of crap)
-		return None
+        print "not music file"
+        return None
                
     if isinstance(data, mutagen.mp3.MP3):
         try: # check if it has APEv2 tags (these take priority)
@@ -165,6 +176,7 @@ def get_tags_object(path):
             return data, "ID3"
 
     else:
+        print "not mp3"
         return None
 
 def get_tags_dict(path):
@@ -217,13 +229,13 @@ if __name__ == '__main__':
                         is_image(f):
                     tmp = tmp_other
                 else:
-                    print "IGNORE: ", full_path
+                    print "IGNORE:", full_path
                     
                 temp_path = os.path.join(tmp, f)
                 shutil.copyfile(full_path, temp_path)
                 
             else:
-                print "TOO BIG TO COPY: ", full_path
+                print "TOO BIG, IGNORING:", full_path
                 
     
     # list of all files that will be added to the zip
@@ -235,13 +247,13 @@ if __name__ == '__main__':
         filepath = os.path.join(tmp, filename)
         
         if options.artist:
-            set_tag(filename, 'artist', options.artist)
+            set_tag(filepath, 'artist', options.artist)
             
         if options.album:
-            set_tag(filename, 'album', options.album)
+            set_tag(filepath, 'album', options.album)
             
         if options.album_meta:
-            append_tag(filename, 'comment', options.album_meta)
+            append_tag(filepath, 'comment', options.album_meta)
             
         ret = is_appropriate(filepath, options.bootleg)
         

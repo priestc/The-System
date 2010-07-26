@@ -40,8 +40,8 @@ class Tags(object):
     def preset(self):
         return self.data.info.preset or self.data.info.bitrate
        
-    def find(self, list):
-        for tag in list:
+    def find(self, tag_list):
+        for tag in tag_list:
             try:
                 if isinstance(self.data[tag], ListType):
                     return self.data[tag][0]
@@ -51,6 +51,18 @@ class Tags(object):
                     return self.data[tag][0]
             except: pass
         return None
+    
+    
+    def set_value(self, tag, value):
+
+        tag_list = getattr(self, tag)
+        
+        for tag in tag_list:
+            try:
+                self.data[tag] = value
+                self.data.save()
+            except: pass
+        
 
 # subclasses of Tags. these just specify what tag names we
 # should be looking for depending on context
