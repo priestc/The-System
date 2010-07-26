@@ -12,7 +12,7 @@ class Album(models.Model):
     
     size = models.FloatField(blank=False)
     
-    storages = models.ManyToManyField("s3_storage.Bucket", related_name='albums')
+    storages = models.ManyToManyField("storage.GenericStorage", related_name='albums')
     filename = models.CharField(max_length=40, unique=True, editable=False)
     
     def __unicode__(self):

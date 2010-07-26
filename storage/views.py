@@ -6,16 +6,16 @@ from forms import *
 from annoying.decorators import render_to
 
 @render_to('new_edit.html')
-def edit_new(request, name=None):
+def new_s3(request, name=None):
     
     if request.POST:
-        form = BucketForm(request.POST)
+        form = S3BucketForm(request.POST)
         form.full_clean()
         
         if form.is_valid():
             form.save()
     else:
-        form = BucketForm()
+        form = S3BucketForm()
         
     return locals()
 

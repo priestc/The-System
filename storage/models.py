@@ -3,19 +3,16 @@ import boto
 
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.db import models
 
 chars_validator = RegexValidator(r'^[\w\d]+$', message="Invalid Characters")
 
-class Bucket(models.Model):
+class GenericStorage(models.Model):
     name = models.CharField(max_length=32, validators=[chars_validator])
     internal_name = models.CharField(max_length=64, editable=False, blank=True)
-    access_key = models.CharField(max_length=20, unique=True)
-    secret_key = models.CharField(max_length=40)
-    
     max_size = models.FloatField(help_text="In Gigabytes (0=unlimited)", default=0)
     max_bandwidth = models.FloatField(help_text="In Gigabytes per month (0=unlimited)", default=0)
-    
     current_bandwidth = models.FloatField(default=0, editable=False)
     
     def __unicode__(self):
@@ -33,51 +30,12 @@ class Bucket(models.Model):
         if not self.test():
             raise ValidationError('Keys are not correct')
     
-    def test(self):
-        """
-        Test to see if the credentials are correct
-        """
+    def save(self, *args, **kwargs):
+        super(GenericStorage, self).save(*args, **kwargs)
         
-        try:
-            conn = self.get_connection()
-            conn.get_all_buckets()
-
-        except:
-            return False
-            
-        else:
-            return True
-    
-    def set_up(self):
-        """
-        Set up the bucket on S3 if it isn't already. Called once when the
-        S3 account is added. If the bucket name is not available, then append
-        a letter to it until a valid one is found
-        """
-
-        def try_name(conn, name):
-            try:
-                conn.create_bucket(name)
-            except boto.exception.S3CreateError:
-                return False
-            else:
-                return True
-        
-        conn = self.get_connection()
-        bucket_name = 'nmp3s_the_system_{0}'.format(self.pk)
-            
-        success = try_name(conn, bucket_name)
-          
-        if not success:
-            for i in 'abcdefghijklmnopqrstuvwxyz':
-                new_name = bucket_name + i
-                if try_name(conn, new_name):
-                    bucket_name = new_name
-                    break
-        else:        
-            self.internal_name = bucket_name
-            self.save()
-
+        if not self.internal_name:
+            self.set_up()
+       
     @property
     def unlimited_bandwidth(self):
         return self.max_bandwidth == 0
@@ -85,7 +43,7 @@ class Bucket(models.Model):
     @property
     def unlimited_size(self):
         return self.max_size == 0
-    
+
     def can_handle(self, bandwidth=None, size=None):
         """
         Does this bucket have enough bandwidth to handle the download?
@@ -112,12 +70,12 @@ class Bucket(models.Model):
         if self.unlimited_bandwidth:
             return 99999999
           
-        ret = self.max_bandwidth - self.current_bandwidth
+        left = self.max_bandwidth - self.current_bandwidth
         
-        if ret < 0:
+        if left < 0:
             return 0
         
-        return ret
+        return left
     
     @property
     def size_left(self):
@@ -129,12 +87,12 @@ class Bucket(models.Model):
         if self.unlimited_size:
             return 99999999
             
-        ret = self.max_size - self.current_size
+        left = self.max_size - self.current_size
         
-        if ret < 0:
+        if left < 0:
             return 0
         
-        return ret
+        return left
     
     @property
     def current_size(self):
@@ -152,10 +110,54 @@ class Bucket(models.Model):
             val += album.size
             
         return val
+
+class S3Bucket(GenericStorage):
+    access_key = models.CharField(max_length=20, unique=True)
+    secret_key = models.CharField(max_length=40)
+    
+    def test(self):
+        """
+        Test to see if the credentials are correct
+        """
+        
+        try:
+            conn = self.get_connection()
+            conn.get_all_buckets()
+
+        except:
+            return False
+            
+        else:
+            return True
+    
+    def set_up(self, prefix_index=0):
+        """
+        Set up the bucket on S3 if it isn't already. Called once when the
+        S3 account is added. If the bucket name is not available, then append
+        a letter to it until a valid one is found
+        """
+        
+        chars = '_abcdefghijklmnopqrstuvwxyz'
+        conn = self.get_connection()
+        prefix = ""
+        
+        if prefix_index > 0:
+            # (index==0 means use no prefix)
+            prefix = chars[prefix_index]
+            
+        bucket_name = '{0}_{1}{2}'.format(settings.STORAGE_PREFIX, self.pk, prefix)
+        
+        try:
+            conn.create_bucket(bucket_name)
+        except boto.exception.S3CreateError:
+            self.set_up(prefix_index + 1) # recursion
+        else:
+            self.internal_name = bucket_name
+            self.save()
     
     def get_connection(self):
         """
-        Create the connection to the
+        Create the connection to the bucket
         """        
         
         return boto.connect_s3(str(self.access_key), str(self.secret_key))
@@ -165,13 +167,13 @@ class Bucket(models.Model):
 ## signals below ##
 ###################
 
-def set_up_bucket(sender, **kwargs):
-    print "setup bucket"
+#def set_up_bucket(sender, **kwargs):
+#    print "setup storage"
 
-    bucket = kwargs['instance']
-    bucket.set_up()
-    
-models.signals.post_save.connect(set_up_bucket, sender=Bucket)
+#    bucket = kwargs['instance']
+#    bucket.set_up()
+#    
+#models.signals.post_save.connect(set_up_bucket, sender=GenericStorage)
 
 
 

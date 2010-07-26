@@ -31,6 +31,10 @@ from types import ListType
 import mutagen
 from multipart import send_request
 
+
+from colorama import init as colorinit
+colorinit(autoreset=True)
+
 ############################
 
 url = 'http://localhost:8000/upload'
@@ -47,9 +51,9 @@ parser.add_option('-b', "--album",
                   dest="album",
                   help="Manually set the album name (ignore ID3 tags)")
 
-parser.add_option('-m', "--album_meta",
-                  dest="album_meta",
-                  help="Manually set the album neta value (ignore ID3 tags)")
+parser.add_option('-m', "--meta",
+                  dest="meta",
+                  help="Album meta data (such as 'remastered 2003')")
 
 parser.add_option("--archive-only",
                   dest="archive",
@@ -135,12 +139,12 @@ def is_appropriate(filepath, is_bootleg):
             
     return "IGNORE"
 
-def set_tag(path, tag, value):
+def set_tag(path, tag, value, append=False):
     """
     Edit the mp3 in the path's tags to reflect the new value
     this function works for either ID3 or APE tagged MP3's
     """
-    
+
     data, tag_type = get_tags_object(path)
     
     if tag_type == "APE":
@@ -148,11 +152,7 @@ def set_tag(path, tag, value):
     elif tag_type == 'ID3':
         tags = MP3(data)
 
-    tags.set_value(tag, value)
-
-
-def append_tag(f, tag, value):
-    raise NotImplementedError
+    tags.set_value(tag, value, append=append)
 
 def get_tags_object(path):
     """
@@ -225,17 +225,20 @@ if __name__ == '__main__':
             if os.stat(full_path).st_size < 104857600:
                 if full_path.endswith('.mp3'):
                     tmp = tmp_mp3
-                elif full_path.endswith('.log') or f.startswith('folder.') and \
-                        is_image(f):
+                elif full_path.endswith('.log') or\
+                      (f.startswith('folder.') and is_image(f)):
                     tmp = tmp_other
                 else:
-                    print "IGNORE:", full_path
+                    tmp = None
+                    print blue("IGNORE:"), full_path
                     
-                temp_path = os.path.join(tmp, f)
-                shutil.copyfile(full_path, temp_path)
+                if tmp:
+                    temp_path = os.path.join(tmp, f)
+                    shutil.copyfile(full_path, temp_path)
                 
             else:
-                print "TOO BIG, IGNORING:", full_path
+                # ignore any file larger than 100 MiB
+                print blue("TOO BIG, IGNORING:"), full_path
                 
     
     # list of all files that will be added to the zip
@@ -244,7 +247,7 @@ if __name__ == '__main__':
     # get all filenames in the mp3 temp dir
     # (where we have already copied all files to)
     for filename in os.listdir(tmp_mp3):
-        filepath = os.path.join(tmp, filename)
+        filepath = os.path.join(tmp_mp3, filename)
         
         if options.artist:
             set_tag(filepath, 'artist', options.artist)
@@ -252,20 +255,17 @@ if __name__ == '__main__':
         if options.album:
             set_tag(filepath, 'album', options.album)
             
-        if options.album_meta:
-            append_tag(filepath, 'comment', options.album_meta)
+        if options.meta:
+            set_tag(filepath, 'comment', options.meta, append=True)
             
         ret = is_appropriate(filepath, options.bootleg)
         
         if ret == 'ADD':
-            print 'add:', filename
+            print bright_green("add:"), filename
             mp3_to_upload.append(filepath)
-            
-        elif ret == 'IGNORE':
-            print "ignore:", filename
                   
         else:
-            print "rejected:", filename, ret
+            print bright_red('reject'), filename, bright_red(ret)
             sys.exit()
             
     print "------------"
@@ -315,7 +315,7 @@ if __name__ == '__main__':
     ################ now do the upload
     
     if mp3_to_upload and not options.archive:
-        send_request(tmpzip, artist, album, options.album_meta, url)
+        send_request(tmpzip, artist, album, options.meta, url)
     elif options.archive:
         print "No upload, archive only"
     else:

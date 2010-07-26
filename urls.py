@@ -11,7 +11,10 @@ urlpatterns = patterns('',
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
+    
+    url(r'^$', 'main.views.home', name='root'),
+        
     (r'^admin/', include(admin.site.urls)),
-    (r'^storage/', include('s3_storage.urls')),
-    (r'^upload$', 's3_storage.views.handle_upload'),
+    (r'^storage/', include('storage.urls')),
+    (r'^upload$', 'storage.views.handle_upload'),
 )

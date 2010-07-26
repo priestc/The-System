@@ -76,7 +76,8 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
     'album',
-    's3_storage',
+    'storage',
+    'main',
     
     'django_extensions',
     

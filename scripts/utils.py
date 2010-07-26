@@ -2,6 +2,22 @@ import Image
 import re
 
 from types import ListType
+from mutagen import id3
+from colorama import Fore, Back, Style
+
+def bright_green(text):
+    return "{color}{style}{text}{reset}"\
+                .format(color=Fore.GREEN, style=Style.BRIGHT,
+                        text=text, reset=Style.RESET_ALL)
+
+def bright_red(text):
+    return "{color}{style}{text}{reset}"\
+                .format(color=Fore.RED, style=Style.BRIGHT,
+                        text=text, reset=Style.RESET_ALL)
+
+def blue(text):
+    return "{color}{text}{reset}"\
+                .format(color=Fore.BLUE, text=text, reset=Fore.RESET)
 
 def clean(value):
     """
@@ -51,45 +67,76 @@ class Tags(object):
                     return self.data[tag][0]
             except: pass
         return None
-    
-    
-    def set_value(self, tag, value):
-
-        tag_list = getattr(self, tag)
-        
-        for tag in tag_list:
-            try:
-                self.data[tag] = value
-                self.data.save()
-            except: pass
         
 
 # subclasses of Tags. these just specify what tag names we
 # should be looking for depending on context
 
 class MP3(Tags):
-	artist = ['TPE1', 'TP1']
-	album = ['TALB', 'TAL']
-	date = ['TYER','TYE', 'TDOR', 'TDRC', 'TXXX:date']
-	track = ['TRCK']
-	title = ['TIT2']
-	disc = ['TPOS']
+    artist = ['TPE1', 'TP1']
+    album = ['TALB', 'TAL']
+    date = ['TYER','TYE', 'TDOR', 'TDRC', 'TXXX:date']
+    track = ['TRCK']
+    title = ['TIT2']
+    disc = ['TPOS']
+    comment = ["COMM::'eng'"]
 	
-	def __init__(self,data):
-		Tags.__init__(self,data)
+    def set_value(self, tag, value, append):
+        """
+        Writing ID3 tags is hard
+        """
+	    
+        tag_list = getattr(self, tag)
 
+        for tag in tag_list:
+            try:
+                old = self.data[tag].text[0] #may raise KeyError
+                #import ipdb; ipdb.set_trace()
+                import_tag = tag.replace("::'eng'", '') # dirty hack
+                
+                #get proper ID3 tag class, TIT2, COMM, TPE, etc
+                Obj = getattr(id3, import_tag)
+                
+                if append:
+                    self.data[tag] = Obj(encoding=3, text=old + " [%s]" % value)
+                    self.data.save()
+                else:
+                    self.data[tag] = Obj(encoding=3, text=value)
+                    self.data.save()
+            except KeyError:
+                pass
+
+
+
+
+                
 class APE(Tags):
-	artist = ['Artist']
-	album = ['Album']
-	date = ['Year', 'Date']
-	track = ['Track']
-	title = ['Title']
-	disc = ['Disc', 'Disk']
-	
-	def __init__(self,data):
-		Tags.__init__(self, data)
+    artist = ['Artist']
+    album = ['Album']
+    date = ['Year', 'Date']
+    track = ['Track']
+    title = ['Title']
+    disc = ['Disc', 'Disk']
+    comment = ['Comment']
 
-
+    def set_value(self, tag, value, append):
+        """
+        Writing APE tags is easy
+        """
+        
+        tag_list = getattr(self, tag)
+        
+        for tag in tag_list:
+            try:
+                old = self.data[tag] #may raise KeyError
+                if append:
+                    self.data[tag] = str(old[0]) + (" [%s]" % value)
+                    self.data.save()
+                else:
+                    self.data[tag] = value
+                    self.data.save()
+            except KeyError:
+                pass
 
 
 
