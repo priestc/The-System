@@ -217,13 +217,17 @@ if __name__ == '__main__':
                         is_image(f):
                     tmp = tmp_other
                 else:
-                    print full_path
+                    print "IGNORE: ", full_path
+                    
                 temp_path = os.path.join(tmp, f)
                 shutil.copyfile(full_path, temp_path)
+                
+            else:
+                print "TOO BIG TO COPY: ", full_path
+                
     
     # list of all files that will be added to the zip
     mp3_to_upload = []
-    other_to_upload = []
     
     # get all filenames in the mp3 temp dir
     # (where we have already copied all files to)
@@ -253,6 +257,7 @@ if __name__ == '__main__':
             sys.exit()
             
     print "------------"
+        
     
     # if the test option is ~not~ used, the temp file will automatically
     # delete itself when the script terminates
@@ -264,7 +269,6 @@ if __name__ == '__main__':
     
     for f in mp3_to_upload:
         tags = get_tags_dict(f)
-        print tags
         album = clean(tags['album'])
         artist = clean(tags['artist'])
         preset = acceptable[tags['preset']]
@@ -289,7 +293,7 @@ if __name__ == '__main__':
             
     # now go through all non-mp3 files and add them to the zip
     
-    for f in other_to_upload:
+    for f in os.listdir(tmp_other):
         file_on_zip = os.path.basename(f)
         s = os.path.join(path_in_zip, file_on_zip)
         z.write(f, s)
