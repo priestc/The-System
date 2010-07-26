@@ -8,7 +8,7 @@ class Album(models.Model):
     
     artist = models.CharField(max_length=96)
     album = models.CharField(max_length=96)
-    album_extra = models.CharField(max_length=32, blank=True)
+    meta = models.CharField(max_length=96, blank=True)
     
     size = models.FloatField(blank=False)
     
@@ -18,12 +18,12 @@ class Album(models.Model):
     def __unicode__(self):
         ret = "{0} - {1}".format(self.artist, self.album)
         
-        if self.album_extra:
-            ret += " [{0}]".format(self.album_extra)
+        if self.meta:
+            ret += " [{0}]".format(self.meta)
             
         return ret
     
-    def save(self, *a, **k):
+    def save(self, *args, **kwargs):
         """
         Overridden to fill in the filename if its not already set
         """
@@ -31,7 +31,7 @@ class Album(models.Model):
         if not self.filename:
             self.filename = make_filename(self.artist, self.album)
         
-        return super(Album, self).save(*a, **k)
+        return super(Album, self).save(*args, **kwargs)
     
     def get_a_bucket(self):
         """

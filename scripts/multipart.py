@@ -2,7 +2,6 @@ import itertools
 import mimetools
 import mimetypes
 from cStringIO import StringIO
-import urllib
 import urllib2
 
 class MultiPartForm(object):
@@ -69,12 +68,13 @@ class MultiPartForm(object):
         return '\r\n'.join(flattened)
 
 def send_request(tmpzip, artist, album, meta, url):
-    import urllib2
+    
+    tmpzip.seek(0)
     
     mpform = MultiPartForm()
     mpform.add_field('artist', artist)
     mpform.add_field('album', album)
-    mpform.add_field('album_meta', meta or "")
+    mpform.add_field('meta', meta or "")
     mpform.add_file('file', 'album.zip', tmpzip)
     
     body = str(mpform)
@@ -85,5 +85,6 @@ def send_request(tmpzip, artist, album, meta, url):
     request.add_header('Content-length', len(body))
     request.add_data(body)
     
+    print "Sending", "{0:.3} GB".format(tmpzip.tell() / 1073741824.0), "to server"
     print urllib2.urlopen(request).read()
 

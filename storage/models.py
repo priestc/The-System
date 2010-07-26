@@ -11,16 +11,16 @@ chars_validator = RegexValidator(r'^[\w\d]+$', message="Invalid Characters")
 class GenericStorage(models.Model):
     name = models.CharField(max_length=32, validators=[chars_validator])
     internal_name = models.CharField(max_length=64, editable=False, blank=True)
-    max_size = models.FloatField(help_text="In Gigabytes (0=unlimited)", default=0)
+    max_storage = models.FloatField(help_text="In Gigabytes (0=unlimited)", default=0)
     max_bandwidth = models.FloatField(help_text="In Gigabytes per month (0=unlimited)", default=0)
     current_bandwidth = models.FloatField(default=0, editable=False)
     
     def __unicode__(self):
         
-        ret = "{0} ({1} GB".format(self.name, str(self.current_size))
+        ret = "{0} ({1} GB".format(self.name, str(self.current_storage))
         
-        if self.max_size > 0:
-            ret += " / {0} GB)".format(str(self.max_size))
+        if self.max_storage > 0:
+            ret += " / {0} GB)".format(str(self.max_storage))
         else:
             ret += ")"
     
@@ -41,8 +41,8 @@ class GenericStorage(models.Model):
         return self.max_bandwidth == 0
     
     @property
-    def unlimited_size(self):
-        return self.max_size == 0
+    def unlimited_storage(self):
+        return self.max_storage == 0
 
     def can_handle(self, bandwidth=None, size=None):
         """
@@ -78,7 +78,7 @@ class GenericStorage(models.Model):
         return left
     
     @property
-    def size_left(self):
+    def storage_left(self):
         """
         Return how much space this storage node has left in GB
         if this node is unlimited, return a really big number
@@ -87,7 +87,7 @@ class GenericStorage(models.Model):
         if self.unlimited_size:
             return 99999999
             
-        left = self.max_size - self.current_size
+        left = self.max_storage - self.current_storage
         
         if left < 0:
             return 0
@@ -95,7 +95,7 @@ class GenericStorage(models.Model):
         return left
     
     @property
-    def current_size(self):
+    def current_storage(self):
         """
         Returns the total size of all albums stored in this bucket in Gigabytes
         """
