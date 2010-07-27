@@ -1,4 +1,4 @@
 *.pyc
 manage.py
-.tp_env/
+.ts_env/
 local_settings.py

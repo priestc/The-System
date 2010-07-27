@@ -14,7 +14,7 @@ importlib==1.0.2
 ipdb==0.1
 ipython==0.10
 mailer==0.5
-psycopg2==2.2.1
+psycopg2==2.2.2
 pyparsing==1.5.3
 python-dateutil==1.5
 wsgiref==0.1.2
