@@ -16,5 +16,6 @@ urlpatterns = patterns('',
         
     (r'^admin/', include(admin.site.urls)),
     (r'^storage/', include('storage.urls')),
+    (r'^album/', include('album.urls')),
     (r'^upload$', 'storage.views.handle_upload'),
 )

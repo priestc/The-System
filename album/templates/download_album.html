@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load album_tags %}
+
+{% block content %}
+
+    All links expire 60 seconds after this page is rendered. 
+    "So hurry up and choose which one of them mirrors you want to download from
+    before they all dissappear." --Bob Dylan
+    
+    <br><br>
+    
+    <big>{{album}}</big>
+    
+    <ul>
+    {% for storage in album.storages.all %}
+    
+        <li>{% s3_dl storage album %}<br>
+        {{ storage.bandwidth_status }}
+        </li>
+    
+    {% empty %}
+        <li>omg no mirrors yet</li>
+    {% endfor %}
+    </ul>
+    
+
+{% endblock %}

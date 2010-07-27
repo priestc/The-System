@@ -4,6 +4,8 @@ import mimetypes
 from cStringIO import StringIO
 import urllib2
 
+USER_AGENT = 'The Project Command Line Client v0.1'
+
 class MultiPartForm(object):
     """Accumulate the data to be used when posting a form."""
 
@@ -80,7 +82,7 @@ def send_request(tmpzip, artist, album, meta, url):
     body = str(mpform)
     
     request = urllib2.Request(url)
-    request.add_header('User-agent', 'The Project Command Line Client')
+    request.add_header('User-agent', USER_AGENT)
     request.add_header('Content-type', mpform.get_content_type())
     request.add_header('Content-length', len(body))
     request.add_data(body)

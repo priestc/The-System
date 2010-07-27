@@ -31,11 +31,23 @@ class GenericStorage(models.Model):
             raise ValidationError('Keys are not correct')
     
     def save(self, *args, **kwargs):
-        super(GenericStorage, self).save(*args, **kwargs)
+        ret = super(GenericStorage, self).save(*args, **kwargs)
         
         if not self.internal_name:
             self.set_up()
-       
+        
+        return ret
+    
+    def get_real_storage(self):
+        """
+        Returns the subclass of this Generic object that contains the actual
+        API for that storage engine.
+        """
+        
+        for attr in settings.CLOUD_ENGINES:
+            if hasattr(self, attr):
+                return getattr(self, attr)
+        
     @property
     def unlimited_bandwidth(self):
         return self.max_bandwidth == 0
@@ -114,7 +126,21 @@ class GenericStorage(models.Model):
 class S3Bucket(GenericStorage):
     access_key = models.CharField(max_length=20, unique=True)
     secret_key = models.CharField(max_length=40)
+    user_id = models.CharField(max_length=64, editable=False, blank=True)
     
+    def save(self, *args, **kwargs):
+        """
+        Before saving to database, try to get the user_id of the bucket
+        """
+        
+        ret = super(S3Bucket, self).save(*args, **kwargs)
+        
+        if not self.user_id:
+            self.user_id = self.get_user_id()
+            self.save()
+
+        return ret
+        
     def test(self):
         """
         Test to see if the credentials are correct
@@ -162,22 +188,41 @@ class S3Bucket(GenericStorage):
         
         return boto.connect_s3(str(self.access_key), str(self.secret_key))
 
+    def get_key(self, key):
+        
+        bucket = self.get_bucket()
+        
+        key = bucket.get_key(str(key))
+        
+        return key
+    
+    def get_bucket(self):
+        """
+        Return the boto bucket object for this S3 storage location
+        """
+        
+        conn = self.get_connection()
+        return conn.get_bucket(self.internal_name)
+    
+    
+    def get_user_id(self):
+        """
+        Get the user ID of the owner of this storage bucket
+        """
+        
+        if not self.user_id:
+            conn = self.get_connection()
+            return conn.get_canonical_user_id()
+        else:
+            return self.user_id
 
-###################
-## signals below ##
-###################
 
-#def set_up_bucket(sender, **kwargs):
-#    print "setup storage"
-
-#    bucket = kwargs['instance']
-#    bucket.set_up()
-#    
-#models.signals.post_save.connect(set_up_bucket, sender=GenericStorage)
-
-
-
-
-
-
+    def upload(self, path):
+        """
+        Sends file to S3 account
+        """
+        
+        bucket = self.get_bucket()
+        key = bucket.new_key(os.path.basename(path))
+        key.set_contents_from_filename(path)
 

@@ -33,6 +33,10 @@ class Album(models.Model):
         
         return super(Album, self).save(*args, **kwargs)
     
+    @models.permalink
+    def get_absolute_url(self):
+        return ('download_album', [str(self.pk)])
+    
     def get_a_bucket(self):
         """
         Returns a Bucket object where this album is stored. Only returns
@@ -47,10 +51,6 @@ class Album(models.Model):
         
         bucket = self.get_a_bucket()
         k = boto.s3.key.Key(bucket)
-        k.key = self.filename + ".zip"
+        k.key = self.filename
         
         return k
-        
-    def get_absolute_url(self):
-        key = self.get_key_object()
-        return key.generate_url()

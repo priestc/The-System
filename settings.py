@@ -79,7 +79,9 @@ INSTALLED_APPS = (
     'storage',
     'main',
     
+    'djcelery',
     'django_extensions',
+    'pagination',
     
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -88,3 +90,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.admin',
 )
+
+# names of all suppoorted cloud engines, must be all lowercase names of a
+# GenericStorage model subclass
+CLOUD_ENGINES = ['s3bucket']

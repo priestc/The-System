@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<ul>
+{% for store in stores %}
+
+<li>
+{{ store.name }} - ({{store.albums.count}} albums)
+{% if store.unlimited_storage %}
+    <br>(unlimited storage)
+{% else %}
+    <br>{{ store.storage_left }} GB / {{ store.max_storage }}
+{% endif %}
+
+{% if store.unlimited_bandwidth %}
+    <br>(unlimited bandwidth)
+{% else %}
+    <br>{{ store.bandwidth_left }} GB / {{ store.max_bandwidth }}
+{% endif %}
+
+</li>
+
+{% endfor %}
+</ul>
+
+{% endblock %}

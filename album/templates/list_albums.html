@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<ul>
+
+    {% for album in albums %}
+    <li>
+        <a href="{{ album.get_artist_url }}">{{ album.artist }}</a> -
+        <a href="{{ album.get_album_url }}">{{ album.album }}</a>
+        {% if album.meta %} <small>[{{ album.meta }}]</small>{% endif %}
+        <br>
+        <small><a href="{{ album.get_absolute_url }}">Download</a>
+        {{ album.size_mb }} ({{album.storages.count}} mirrors)
+        </small>
+    </li>
+    {% endfor %}
+    
+</ul>
+{% endblock %}
