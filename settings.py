@@ -1,12 +1,7 @@
 # Django settings for the project.
 
-from local_settings import *
-
-DEBUG = True
-TEMPLATE_DEBUG = DEBUG
-
 ADMINS = (
-    # ('Your Name', 'your_email@domain.com'),
+    ('Chris', 'nbvfour@gmail.com'),
 )
 
 MANAGERS = ADMINS
@@ -28,11 +23,11 @@ SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
-USE_I18N = True
+USE_I18N = False
 
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale
-USE_L10N = True
+USE_L10N = False
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -46,7 +41,7 @@ MEDIA_URL = ''
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/media/'
+ADMIN_MEDIA_PREFIX = '/ad-media/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'k540s&3lcxs)9q0y7umop967rp$u%kjeq2$x7)vjl1!43o#z*s'
@@ -94,3 +89,8 @@ INSTALLED_APPS = (
 # names of all suppoorted cloud engines, must be all lowercase names of a
 # GenericStorage model subclass
 CLOUD_ENGINES = ['s3bucket']
+
+import djcelery
+djcelery.setup_loader()
+
+from local_settings import *
