@@ -69,14 +69,16 @@ class MultiPartForm(object):
         flattened.append('')
         return '\r\n'.join(flattened)
 
-def send_request(tmpzip, artist, album, meta, url, silent=False):
+def send_request(tmpzip, data, url, silent=False):
     
     tmpzip.seek(0)
     
     mpform = MultiPartForm()
-    mpform.add_field('artist', artist)
-    mpform.add_field('album', album)
-    mpform.add_field('meta', meta or "")
+    mpform.add_field('artist', data['artist'])
+    mpform.add_field('album', data['album'])
+    mpform.add_field('meta', data['meta'] or "")
+    mpform.add_field('date', data['date'])
+    mpform.add_field('profile', data['profile'])
     mpform.add_file('file', 'album.zip', tmpzip)
     
     body = str(mpform)

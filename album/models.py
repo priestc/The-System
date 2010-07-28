@@ -9,7 +9,8 @@ class Album(models.Model):
     artist = models.CharField(max_length=96)
     album = models.CharField(max_length=96)
     meta = models.CharField(max_length=96, blank=True)
-    
+    date = models.CharField(max_length=12, blank=False)
+    profile = models.CharField(max_length=20, blank=False)
     size = models.FloatField(blank=False)
     
     storages = models.ManyToManyField("storage.GenericStorage", related_name='albums', blank=True)

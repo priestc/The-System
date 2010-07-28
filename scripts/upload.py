@@ -75,9 +75,18 @@ parser.add_option("-q", "--silent",
                   action="store_true",
                   default=False,
                   help="No output except for the server response")
-                
+
+parser.add_option("--local",
+                  dest="local",
+                  action="store_true",
+                  default=False,
+                  help="Use local dev server (testing only)")
+            
 (options, args) = parser.parse_args()
 
+
+if options.local:
+    url = 'http://localhost:8000/upload'
 
 # get the path to the directory to upload.
 try:
@@ -328,7 +337,9 @@ if __name__ == '__main__':
     ################ now do the upload
     
     if mp3_to_upload and not options.archive:
-        send_request(tmpzip, artist, album, options.meta, url, options.silent)
+        data = dict(artist=artist, album=album, meta=options.meta,
+                    profile=preset, date=date)
+        send_request(tmpzip, data, url, options.silent)
     elif options.archive:
         if not options.silent: print "No upload, archive only"
     else:
