@@ -17,10 +17,10 @@ class GenericStorage(models.Model):
     
     def __unicode__(self):
         
-        ret = "{0} ({1:.3f} GB".format(self.name, str(self.current_storage))
+        ret = "{0} ({1:.3f} GB".format(self.name, self.current_storage)
         
         if self.max_storage > 0:
-            ret += " / {0:.3f} GB)".format(str(self.max_storage))
+            ret += " / {0:.3f} GB)".format(self.max_storage)
         else:
             ret += ")"
     
