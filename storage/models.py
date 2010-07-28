@@ -1,5 +1,6 @@
 import re
 import boto
+import os
 
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
@@ -216,20 +217,15 @@ class S3Bucket(GenericStorage):
             return self.user_id
 
 
-    def upload(self, path):
+    def upload(self, path, upload_name):
         """
         Sends file to S3 account
         """
-        
-#        print "uploading to S3 for reals: %s" self.path
-#        print "sleeping to simulate upload..."
-#        import time
-#        time.sleep(60)
-#        print "done!"
-#        return
 
-        import os
         bucket = self.get_bucket()
         key = bucket.new_key(os.path.basename(path))
+        print "### uploading " + upload_name + " to " + self.name
         key.set_contents_from_filename(path, reduced_redundancy=True)
+        print "### done uploading " + upload_name + " to " + self.name
+        
 

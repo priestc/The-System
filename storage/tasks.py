@@ -20,7 +20,7 @@ def upload(album, filepath, storages):
             # if this storage doesn't already have this album,
             # and it can handle the bandwidth, then sent it there!
             storage = storage.get_real_storage()
-            storage.upload(filepath)
+            storage.upload(filepath, str(album))
             album.storages.add(storage)
             album.save()
             return storage

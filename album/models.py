@@ -17,7 +17,7 @@ class Album(models.Model):
     filename = models.CharField(max_length=44, unique=True, editable=False)
     
     def __unicode__(self):
-        ret = "{0} - {1}".format(self.artist, self.album)
+        ret = "{0} - ({1}) {2}".format(self.artist, self.date, self.album)
         
         if self.meta:
             ret += " [{0}]".format(self.meta)
