@@ -19,7 +19,6 @@ is then uploaded to the project's master server
 
 import os
 import shutil
-import sys
 import tempfile
 import zipfile
 
