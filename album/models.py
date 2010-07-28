@@ -12,8 +12,8 @@ class Album(models.Model):
     
     size = models.FloatField(blank=False)
     
-    storages = models.ManyToManyField("storage.GenericStorage", related_name='albums')
-    filename = models.CharField(max_length=40, unique=True, editable=False)
+    storages = models.ManyToManyField("storage.GenericStorage", related_name='albums', blank=True)
+    filename = models.CharField(max_length=44, unique=True, editable=False)
     
     def __unicode__(self):
         ret = "{0} - {1}".format(self.artist, self.album)

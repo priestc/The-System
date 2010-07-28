@@ -29,7 +29,8 @@ def list_storage(request):
 @csrf_exempt
 def handle_upload(request):
     
-    if not request.META['HTTP_USER_AGENT'].startswith("The Project Command Line Client"):
+    if not request.META['HTTP_USER_AGENT']\
+                .startswith("The Project Command Line Client"):
         raise Http404
 
     meta = request.POST.get('meta', None)
@@ -49,6 +50,6 @@ def handle_upload(request):
         destination.write(chunk)
     destination.close()
     
-    upload_to_remote_storage.delay(album, destination.name)
+    upload_to_remote_storage.delay(obj, destination.name)
     
     return HttpResponse(disp_size + ' recieved from client!!!', mimetype='text/plain')

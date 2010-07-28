@@ -56,14 +56,14 @@ class GenericStorage(models.Model):
     def unlimited_storage(self):
         return self.max_storage == 0
 
-    def can_handle(self, bandwidth=None, size=None):
+    def can_handle(self, bandwidth=None, storage=None):
         """
         Does this bucket have enough bandwidth to handle the download?
         Does this bucket have enough storage space to handle the upload?
         """
         
-        if size and not self.unlimited_size:
-            return self.size_left > size
+        if storage and not self.unlimited_storage:
+            return self.storage_left > storage
         
         if bandwidth and not self.unlimited_bandwidth:
             return self.bandwidth_left > bandwidth
@@ -134,7 +134,7 @@ class S3Bucket(GenericStorage):
         """
         
         ret = super(S3Bucket, self).save(*args, **kwargs)
-        
+        return
         if not self.user_id:
             self.user_id = self.get_user_id()
             self.save()
@@ -149,7 +149,6 @@ class S3Bucket(GenericStorage):
         try:
             conn = self.get_connection()
             conn.get_all_buckets()
-
         except:
             return False
             
@@ -221,6 +220,13 @@ class S3Bucket(GenericStorage):
         """
         Sends file to S3 account
         """
+        
+#        print "uploading to S3 for reals: %s" self.path
+#        print "sleeping to simulate upload..."
+#        import time
+#        time.sleep(60)
+#        print "done!"
+#        return
         
         bucket = self.get_bucket()
         key = bucket.new_key(os.path.basename(path))

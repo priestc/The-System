@@ -69,7 +69,7 @@ class MultiPartForm(object):
         flattened.append('')
         return '\r\n'.join(flattened)
 
-def send_request(tmpzip, artist, album, meta, url):
+def send_request(tmpzip, artist, album, meta, url, silent=False):
     
     tmpzip.seek(0)
     
@@ -87,6 +87,9 @@ def send_request(tmpzip, artist, album, meta, url):
     request.add_header('Content-length', len(body))
     request.add_data(body)
     
-    print "Sending", "{0:.3} GB".format(tmpzip.tell() / 1073741824.0), "to server"
-    print urllib2.urlopen(request).read()
+    if not silent: print "Sending", "{0:.3} GB".format(tmpzip.tell() / 1073741824.0), "to server"
+    try:
+        print urllib2.urlopen(request).read()
+    except Exception, e:
+        print e.read()
 

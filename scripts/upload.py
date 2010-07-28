@@ -37,22 +37,25 @@ colorinit(autoreset=True)
 
 ############################
 
-url = 'http://localhost:8000/upload'
+url = 'http://thesystem.chickenkiller.com/upload'
 
 ############################
 
-parser = OptionParser(usage="%prog [PATH] [options]", version="0.01")
+parser = OptionParser(usage="%prog [PATH] [options]", version="0.1")
 
 parser.add_option('-a', "--artist",
                   dest="artist",
+                  metavar="ARTIST",
                   help="Manually set the artist name (ignore ID3 tags)")
                   
 parser.add_option('-b', "--album",
                   dest="album",
+                  metavar="ALBUM",
                   help="Manually set the album name (ignore ID3 tags)")
 
 parser.add_option('-m', "--meta",
                   dest="meta",
+                  metavar="META",
                   help="Album meta data (such as 'remastered 2003')")
 
 parser.add_option("--archive-only",
@@ -66,7 +69,13 @@ parser.add_option("--bootleg",
                   action="store_true",
                   default=False,
                   help="This album is a bootleg (disables bitrate checks)")
-                  
+
+parser.add_option("-q", "--silent",
+                  dest="silent",
+                  action="store_true",
+                  default=False,
+                  help="No output except for the server response")
+                
 (options, args) = parser.parse_args()
 
 
@@ -230,7 +239,7 @@ if __name__ == '__main__':
                     tmp = tmp_other
                 else:
                     tmp = None
-                    print blue("IGNORE:"), full_path
+                    if not options.silent: print blue("IGNORE:"), full_path
                     
                 if tmp:
                     temp_path = os.path.join(tmp, f)
@@ -238,7 +247,7 @@ if __name__ == '__main__':
                 
             else:
                 # ignore any file larger than 100 MiB
-                print blue("TOO BIG, IGNORING:"), full_path
+                if not options.silent: print blue("TOO BIG, IGNORING:"), full_path
                 
     
     # list of all files that will be added to the zip
@@ -261,14 +270,16 @@ if __name__ == '__main__':
         ret = is_appropriate(filepath, options.bootleg)
         
         if ret == 'ADD':
-            print bright_green("add:"), filename
+            if not options.silent: print bright_green("add:"), filename
             mp3_to_upload.append(filepath)
                   
         else:
-            print bright_red('reject'), filename, bright_red(ret)
+            if not options.silent: print bright_red('reject'),\
+                                         filename,\
+                                         bright_red(ret)
             sys.exit()
             
-    print "------------"
+    if not options.silent: print "------------"
         
     
     # if the archive option is ~not~ used, the temp file will automatically
@@ -315,11 +326,11 @@ if __name__ == '__main__':
     ################ now do the upload
     
     if mp3_to_upload and not options.archive:
-        send_request(tmpzip, artist, album, options.meta, url)
+        send_request(tmpzip, artist, album, options.meta, url, options.silent)
     elif options.archive:
-        print "No upload, archive only"
+        if not options.silent: print "No upload, archive only"
     else:
-        print "nothing to upload, all files rejected"
+        if not options.silent: print "nothing to upload, all files rejected"
         sys.exit()
         
     ############### cleanup
