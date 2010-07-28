@@ -224,16 +224,19 @@ def get_tags_dict(path):
 ############################
 ############################
 
+# create temp dirs
+base_tmp = tempfile.mkdtemp()
+tmp_mp3 = os.path.join(base_tmp, 'mp3')
+tmp_other = os.path.join(base_tmp, 'other')
+
+os.mkdir(tmp_mp3)
+os.mkdir(tmp_other)
+
+def clean_and_exit():
+    shutil.rmtree(base_tmp)
+    raise SystemExit
+
 if __name__ == '__main__':
-
-    # create temp dirs
-
-    base_tmp = tempfile.mkdtemp()
-    tmp_mp3 = os.path.join(base_tmp, 'mp3')
-    tmp_other = os.path.join(base_tmp, 'other')
-    
-    os.mkdir(tmp_mp3)
-    os.mkdir(tmp_other)
     
     # move all files to the temp directory
     
@@ -288,7 +291,7 @@ if __name__ == '__main__':
             if not options.silent: print bright_red('reject'),\
                                          filename,\
                                          bright_red(ret)
-            sys.exit()
+            clean_and_exit()
             
     if not options.silent: print "------------"
         
@@ -331,8 +334,6 @@ if __name__ == '__main__':
         file_on_zip = os.path.basename(f)
         s = os.path.join(path_in_zip, file_on_zip)
         z.write(f, s)
-
-    #z.setpassword('poo')
     
     ################ now do the upload
     
@@ -344,23 +345,20 @@ if __name__ == '__main__':
         if not options.silent: print "No upload, archive only"
     else:
         if not options.silent: print "nothing to upload, all files rejected"
-        sys.exit()
+        clean_and_exit()
         
     ############### cleanup
 
     z.close()
-    
+
     if options.archive:
+        #if the archive option is used, we have to manually delete the temp file
         tmpzip.seek(0)
         f = open('archive.zip', 'w')
         f.writelines(tmpzip.readlines())
         os.remove(tmpzip.name)
-    
-    shutil.rmtree(base_tmp)
 
-
-
-
+    clean_and_exit()
 
 
 

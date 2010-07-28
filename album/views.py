@@ -3,7 +3,7 @@ from annoying.decorators import render_to
 
 @render_to('list_albums.html')
 def view_albums(request):
-    albums = Album.objects.all()
+    albums = Album.objects.order_by('artist', 'date', 'album')
     return locals()
 
 @render_to('download_album.html')

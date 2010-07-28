@@ -8,12 +8,11 @@
     
     {% for album in albums %}
     <li>
-        <a href="{{ album.get_artist_url }}">{{ album.artist }}</a> -
-        <a href="{{ album.get_album_url }}">{{ album.album }}</a>
-        {% if album.meta %} <small>[{{ album.meta }}]</small>{% endif %}{{ album.size_mb }}
+        <strong>{{ album.artist }} - {{ album.date }} - {{ album.album }}</strong>
+        {% if album.meta %} <small>[{{ album.meta }}]</small>{% endif %}
         <br>
         <small><a href="{{ album.get_absolute_url }}">Download</a>
-         ({{album.storages.count}} mirrors)
+         ({{album.storages.count}} mirrors) {{ album.size_mb }} ({{ album.profile }})
         </small><br><br>
     </li>
     {% endfor %}
