@@ -227,7 +227,8 @@ class S3Bucket(GenericStorage):
 #        time.sleep(60)
 #        print "done!"
 #        return
-        
+
+        import os
         bucket = self.get_bucket()
         key = bucket.new_key(os.path.basename(path))
         key.set_contents_from_filename(path)

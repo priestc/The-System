@@ -237,6 +237,8 @@ if __name__ == '__main__':
                 elif full_path.endswith('.log') or\
                       (f.startswith('folder.') and is_image(f)):
                     tmp = tmp_other
+                    if not options.silent:
+                        print bright_green("add:"), os.path.basename(full_path)
                 else:
                     tmp = None
                     if not options.silent: print blue("IGNORE:"), full_path
@@ -255,7 +257,7 @@ if __name__ == '__main__':
     
     # get all filenames in the mp3 temp dir
     # (where we have already copied all files to)
-    for filename in os.listdir(tmp_mp3):
+    for filename in sorted(os.listdir(tmp_mp3)):
         filepath = os.path.join(tmp_mp3, filename)
         
         if options.artist:
