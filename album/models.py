@@ -61,6 +61,4 @@ class Album(models.Model):
         """
 
         return "{0:.3f} MB".format(self.size * 1024.0)
-    
-    def mirrors(self):
-        ", ".join(self.storages.values_list('name', flat=True))
+    size_mb.admin_order_field = 'size'

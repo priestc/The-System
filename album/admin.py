@@ -5,4 +5,7 @@ class AlbumAdmin(admin.ModelAdmin):
     list_display = ('artist', 'album', 'meta', 'size_mb', 'mirrors')
     readonly_fields = ('filename',)
 
+    def mirrors(self, obj):
+        return ", ".join(obj.storages.values_list('name', flat=True))
+
 admin.site.register(Album, AlbumAdmin)
