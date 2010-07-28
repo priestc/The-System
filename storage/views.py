@@ -2,6 +2,7 @@ import os
 
 from django.http import HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 
 from album.models import Album
 from models import *
@@ -9,6 +10,7 @@ from forms import *
 from tasks import upload_to_remote_storage
 from annoying.decorators import render_to
 
+@login_required
 @render_to('new_edit.html')
 def new_s3(request, name=None):
     
@@ -23,6 +25,7 @@ def new_s3(request, name=None):
         
     return locals()
 
+@login_required
 @render_to('list_storages.html')
 def list_storage(request):
     stores = GenericStorage.objects.all()

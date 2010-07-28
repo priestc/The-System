@@ -22,5 +22,4 @@ urlpatterns = patterns('',
     
     (r'^upload$', 'storage.views.handle_upload'),
     
-    
 )
