@@ -1,7 +1,11 @@
 import os
+import shutil
 
 from celery.decorators import task
+from django.conf import settings
+
 from storage.models import GenericStorage
+from album.models import Album
 from storage.utils import copy_s3
 
 def upload(album, filepath, storages):
@@ -13,10 +17,12 @@ def upload(album, filepath, storages):
     
     for storage in storages:
         if storage.can_handle(storage=album.size):
-            storage = storage.get_real_storage()
             # if this storage doesn't already have this album,
             # and it can handle the bandwidth, then sent it there!
+            storage = storage.get_real_storage()
             storage.upload(filepath)
+            album.storages.add(storage)
+            album.save()
             return storage
         
 def mirror(album, storages, orig):
@@ -29,18 +35,25 @@ def mirror(album, storages, orig):
     
     for storage in storages:
         if storage.can_handle(storage=album.size):
-            storage = storage.get_real_storage()
             # if this storage doesn't already have this album,
             # and it can handle the bandwidth, then sent it there!
+            storage = storage.get_real_storage()
             copy_s3(orig, storage, album)
+            album.storages.add(storage)
+            album.save()
             return storage
-            
+
+#############
+#############
+          
 @task
-def upload_to_remote_storage(album, filepath):
+def upload_to_remote_storage(album_pk, filepath):
     """
     Do the actual upload to S3 as well as the mirroring. This is a task
     that is ran asynchronously through celery.
     """
+    
+    album = Album.objects.get(pk=album_pk)
     
     # a generator so all iterations occur without resetting anything
     storages = GenericStorage.objects\
@@ -56,6 +69,6 @@ def upload_to_remote_storage(album, filepath):
     # mirror again, this time copy it from the second location
     mirror(album, storages, st2)
     
+    shutil.move(filepath, settings.DELETE_PATH)
+    
     return
-
-

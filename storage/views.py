@@ -1,3 +1,5 @@
+import os
+
 from django.http import HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 
@@ -28,6 +30,10 @@ def list_storage(request):
 
 @csrf_exempt
 def handle_upload(request):
+    """
+    All uploads are handled by this view. It takes the file, saves it to the
+    local filesystem, then adds the S3 upload to the upload queue.
+    """
     
     if not request.META['HTTP_USER_AGENT']\
                 .startswith("The Project Command Line Client"):
@@ -38,18 +44,19 @@ def handle_upload(request):
     artist = request.POST.get('artist', None)
     
     f = request.FILES['file']
-
     size = f.size / 1073741824.0
     disp_size = "{0:.3} GB".format(size)
     
-    obj = Album(artist=artist, album=album, meta=meta, size=size)
-    obj.save()
+    album_obj = Album(artist=artist, album=album, meta=meta, size=size)
+    album_obj.save()
     
-    destination = open('/var/uploads/' + obj.filename, 'wb+')
+    save_location = os.path.join(settings.UPLOAD_PATH, album_obj.filename)
+    destination = open(save_location, 'wb+')
+    
     for chunk in f.chunks():
         destination.write(chunk)
     destination.close()
     
-    upload_to_remote_storage.delay(obj, destination.name)
+    upload_to_remote_storage.delay(album_obj.pk, destination.name)
     
     return HttpResponse(disp_size + ' recieved from client!!!', mimetype='text/plain')

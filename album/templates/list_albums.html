@@ -1,18 +1,20 @@
 {% extends "base.html" %}
-
+{% load pagination_tags %}
 
 {% block content %}
+{% autopaginate albums 50 %}
+{% paginate %}
 <ul>
-
+    
     {% for album in albums %}
     <li>
         <a href="{{ album.get_artist_url }}">{{ album.artist }}</a> -
         <a href="{{ album.get_album_url }}">{{ album.album }}</a>
-        {% if album.meta %} <small>[{{ album.meta }}]</small>{% endif %}
+        {% if album.meta %} <small>[{{ album.meta }}]</small>{% endif %}{{ album.size_mb }}
         <br>
         <small><a href="{{ album.get_absolute_url }}">Download</a>
-        {{ album.size_mb }} ({{album.storages.count}} mirrors)
-        </small>
+         ({{album.storages.count}} mirrors)
+        </small><br><br>
     </li>
     {% endfor %}
     

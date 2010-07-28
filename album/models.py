@@ -54,3 +54,10 @@ class Album(models.Model):
         k.key = self.filename
         
         return k
+    
+    def size_mb(self):
+        """
+        Return the size of this album in megabytes.
+        """
+
+        return "{0:.3} MB".format(self.size * 1024.0)
