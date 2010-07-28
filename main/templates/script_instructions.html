@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>How it all works</h2>
+<ul>
+    <li>
+        Download the archive above and extract the files into some directory.
+        You much have python 2.6 or 2.7 installed. Python 2.5 or earlier and
+        versions above 3.0 will not work.
+    </li>
+    
+    <li>
+        Navigate on the commandline to the folder where the album lives that
+        you want to upload. Run the following command: "/path/to/upload.py"
+    </li>
+    
+    <li>
+        The script will them output which files it finds appropriate (ones that are
+        MP3 files and encoded with either -V2, -V1, --aps, etc), puts them into
+        a zip archive and then uploads it to the server.
+    </li>
+    
+    <li>
+        Once the server gets the file, it adds it to the upload queue where it
+        will eventually be sent off to three different S3 accounts.
+    </li>
+    
+    <li>
+        Once the uploading has been completed, the album will appear in the
+        album list <a href="{% url view_albums %}">located here</a>.
+    </li>
+</ul>
+
+
+<h2>Upload requirements</h2>
+<ul>
+    <li>
+        All files mp3 files need to be tagged with either APE tags or ID3 tags
+        (v1 or v2). The following tags must be presennt: album, artist, date,
+        track, and didc if the album is multiple discs.
+    </li>
+    
+    <li>
+        The date must be the date of the original release of the album. If the
+        album was first released in 1992, but was remastered in 2003, the date
+        in the ID3 tags should be 1992. If you are uploading the 2003 remastered
+        version, then the meta value (see below) should be set to "2003 remaster"
+    </li>
+
+    <li>
+        The album should be set to the actual album name the artist intended. Do
+        not have the album be tagged as "The Chronic (remastered)", it should be
+        tagged as "The Chronic".
+    </li>
+    
+    <li>
+        The meta value of the album should be any information about the album
+        that relates to the source of the rip. Exaqmples are "2003 remastered", 
+        "vinyl rip", "cassette rip", "2005 reissue", "Remastered and Relit edition",
+        etc.
+    </li>    
+    
+    <li>
+        If the album you want to upload does not conform to these standards, you
+        can override the value in the ID3/APE tags by using the commandline arguments
+        such as:
+        
+        <br><br>
+        <em>C:/path/to/upload.py --artist="Dr. Dre" --album="The Chronic"
+        --meta="Remastered and Relit 2009" --date="1992"</em>
+        <br><br>
+        
+        This option will
+        copy the mp3 files to a temp location, edit those tags with the new info
+        and then use those iles to make the archive. These extra options do not
+        change any tags on the original files.
+    </li>
+</ul>
+
+<big><a href="{% url script_download %}">Downoad script here</a><big>
+
+{% endblock %}

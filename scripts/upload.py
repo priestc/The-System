@@ -30,7 +30,6 @@ from types import ListType
 import mutagen
 from multipart import send_request
 
-
 from colorama import init as colorinit
 colorinit(autoreset=True)
 
@@ -208,12 +207,14 @@ def get_tags_dict(path):
     elif tag_type == 'ID3':
         tags = MP3(data).info
 
-    if "/" in (tags['track'] or ""):
+    # doggone tag libraries alwaystrying to be cute
+
+    if tags['track'] and ("/" in tags['track']):
         t = tags['track']
         index = t.find('/')
         tags['track'] = t[:index]
         
-    if "/" in (tags['disc'] or ""):
+    if tags['disc'] and ("/" in tags['disc']):
         t = tags['disc']
         index = t.find('/')
         tags['disc'] = t[:index]
