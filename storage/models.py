@@ -15,7 +15,7 @@ class GenericStorage(models.Model):
     max_storage = models.FloatField(help_text="In Gigabytes (0=unlimited)", default=0)
     max_bandwidth = models.FloatField(help_text="In Gigabytes per month (0=unlimited)", default=0)
     current_bandwidth = models.FloatField(default=0, editable=False)
-    date_added = models.DateTimeField(auto_now_add=True)
+    #date_added = models.DateTimeField(auto_now_add=True)
     
     def __unicode__(self):
         
@@ -119,11 +119,8 @@ class GenericStorage(models.Model):
             # (when the model has been saved)
             return "--"
         
-        val = 0
-        for album in self.albums.all():
-            val += album.size
-            
-        return val
+        return self.albums.aggregate(models.Sum('size'))['size__sum']
+
 
 class S3Bucket(GenericStorage):
     access_key = models.CharField(max_length=20, unique=True)
