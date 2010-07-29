@@ -12,7 +12,6 @@ class Album(models.Model):
     date = models.CharField(max_length=12, blank=False)
     profile = models.CharField(max_length=20, blank=False)
     size = models.FloatField(blank=False)
-    
     date_added = models.DateTimeField(auto_now_add=True)
     
     storages = models.ManyToManyField("storage.GenericStorage", related_name='albums', blank=True)
@@ -62,6 +61,7 @@ class Album(models.Model):
         """
         Return the size of this album in megabytes.
         """
-
+        
         return "{0:.3f} MB".format(self.size * 1024.0)
+
     size_mb.admin_order_field = 'size'
