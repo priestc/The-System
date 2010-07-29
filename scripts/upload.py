@@ -52,6 +52,11 @@ parser.add_option('-p', "--password",
                   default=None,
                   help="The password for the whole thing to work (gotten from you-know-where)")
 
+parser.add_option('-v', "--verify",
+                  dest="verify",
+                  action="store_true",
+                  help="Verify before uploading")
+                  
 parser.add_option('-a', "--artist",
                   dest="artist",
                   metavar="ARTIST",
@@ -96,7 +101,7 @@ parser.add_option("--local",
 if options.password:
     password = options.password
 
-if not (options.archive or options.local) and password == '':
+if (not options.archive) and password == '':
     print "Password Required"
     raise SystemExit
 
@@ -367,6 +372,11 @@ if __name__ == '__main__':
     
     ################ now do the upload
     
+    if options.verify:
+        answer = raw_input("Does the above look all right? Y/n?")
+        if answer.upper() == 'N':
+            clean_and_exit()
+        
     if mp3_to_upload and not options.archive:
         data = dict(artist=artist, album=album, meta=options.meta,
                     profile=preset, date=date, password=password)
