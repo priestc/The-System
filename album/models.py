@@ -13,6 +13,8 @@ class Album(models.Model):
     profile = models.CharField(max_length=20, blank=False)
     size = models.FloatField(blank=False)
     
+    date_added = models.DateTimeField(auto_now_add=True)
+    
     storages = models.ManyToManyField("storage.GenericStorage", related_name='albums', blank=True)
     filename = models.CharField(max_length=44, unique=True, editable=False)
     

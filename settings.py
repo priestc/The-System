@@ -6,6 +6,9 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -60,6 +63,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'pagination.middleware.PaginationMiddleware',
+    'main.middleware.LoginRequiredMiddleware',
 )
 
 ROOT_URLCONF = 'the_system.urls'
@@ -95,3 +99,8 @@ import djcelery
 djcelery.setup_loader()
 
 from local_settings import *
+
+# urls exempt from being logged in; needed for LoginRequiredMiddleware
+LOGIN_EXEMPT_URLS = (
+    r'^upload$',
+) 

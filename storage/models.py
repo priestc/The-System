@@ -15,6 +15,7 @@ class GenericStorage(models.Model):
     max_storage = models.FloatField(help_text="In Gigabytes (0=unlimited)", default=0)
     max_bandwidth = models.FloatField(help_text="In Gigabytes per month (0=unlimited)", default=0)
     current_bandwidth = models.FloatField(default=0, editable=False)
+    date_added = models.DateTimeField(auto_now_add=True)
     
     def __unicode__(self):
         

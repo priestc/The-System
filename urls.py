@@ -20,6 +20,10 @@ urlpatterns = patterns('',
     (r'^storage/', include('storage.urls')),
     (r'^album/', include('album.urls')),
     
-    (r'^upload$', 'storage.views.handle_upload'),
-    
+    (r'^upload$', 'storage.views.handle_upload'),  
+)
+
+urlpatterns += patterns('django.contrib.auth',
+    (r'^login/$','views.login', {'template_name': 'login.html'}),
+    (r'^logout/$','views.logout'),
 )

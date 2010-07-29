@@ -90,7 +90,7 @@ def send_request(tmpzip, data, url, silent=False):
     request.add_header('Content-length', len(body))
     request.add_data(body)
     
-    if not silent: print "Sending", "{0} bytes".format(tmpzip.tell()), "to server"
+    if not silent: print tmpzip.tell(), "bytes being sent to server..."
     try:
         print urllib2.urlopen(request).read()
     except Exception, e:

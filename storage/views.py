@@ -2,7 +2,6 @@ import os
 
 from django.http import HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
 from django.conf import settings
 
 from album.models import Album
@@ -11,7 +10,6 @@ from forms import *
 from tasks import upload_to_remote_storage
 from annoying.decorators import render_to
 
-@login_required
 @render_to('new_edit.html')
 def new_s3(request, name=None):
     
@@ -26,7 +24,6 @@ def new_s3(request, name=None):
         
     return locals()
 
-@login_required
 @render_to('list_storages.html')
 def list_storage(request):
     stores = GenericStorage.objects.all()
@@ -53,8 +50,7 @@ def handle_upload(request):
     profile = request.POST.get('profile', None)
       
     f = request.FILES['file']
-    size = f.size / 1073741824.0
-    disp_size = "{0:.3} GB".format(size)
+    size = f.size
     
     album_obj = Album(artist=artist, profile=profile, date=date,
                       album=album, meta=meta, size=size)
@@ -69,4 +65,4 @@ def handle_upload(request):
     
     upload_to_remote_storage.delay(album_obj.pk, destination.name)
     
-    return HttpResponse(disp_size + ' recieved from client!!!', mimetype='text/plain')
+    return HttpResponse(size + 'bytes recieved from client!!!', mimetype='text/plain')
