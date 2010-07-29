@@ -12,6 +12,9 @@ it then takes all eligible files and adds them to a zip archive. The zip archive
 is then uploaded to the project's master server
 
 """
+# enter the default password below
+password = ''
+
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -27,6 +30,8 @@ from utils import *
 from optparse import OptionParser
 from types import ListType
 
+from collections import defaultdict
+
 import mutagen
 from multipart import send_request
 
@@ -40,6 +45,12 @@ url = 'http://thesystem.chickenkiller.com/upload'
 ############################
 
 parser = OptionParser(usage="%prog [PATH] [options]", version="0.1")
+
+parser.add_option('-p', "--password",
+                  dest="password",
+                  metavar="PASS",
+                  default=None,
+                  help="The password for the whole thing to work (gotten from you-know-where)")
 
 parser.add_option('-a', "--artist",
                   dest="artist",
@@ -82,6 +93,12 @@ parser.add_option("--local",
             
 (options, args) = parser.parse_args()
 
+if options.password:
+    password = options.password
+
+if not (options.archive or options.local) and password == '':
+    print "Password Required"
+    raise SystemExit
 
 if options.local:
     url = 'http://localhost:8000/upload'
@@ -97,18 +114,31 @@ except IndexError:
 ############################
 
 # all mp3 presets that are allowed. Also, mappings to a shorthand name
-acceptable = {"--alt-preset extreme": "-ape",
-              "--alt-preset standard": "-aps",
-              "--alt-preset fast standard": "-apfs",
-              "--alt-preset fast extreme": "-apfe",
-              "--alt-preset insane": "-api",
-              "-V 0": "-V0",
-              "-V 0 --vbr-new": "-V0",
-              "-V 1": "-V1",
-              "-V 1 --vbr-new": "-V1",
-              "-V 2": "-V2",
-              "-V 2 --vbr-new": "-V2",
+# use a defaultdict to handle when the preset is actually a bitrate
+
+acceptable_profiles = {"--alt-preset extreme": "-ape",
+         "--alt-preset standard": "-aps",
+         "--alt-preset fast standard": "-apfs",
+         "--alt-preset fast extreme": "-apfe",
+         "--alt-preset insane": "-api",
+         "-V 0": "-V0",
+         "-V 0 --vbr-new": "-V0",
+         "-V 1": "-V1",
+         "-V 1 --vbr-new": "-V1",
+         "-V 2": "-V2",
+         "-V 2 --vbr-new": "-V2",
 }
+
+def profile_name(profile):
+    """
+    Returns a shorthand formatted version of the profile/bitrate.
+    """
+    
+    if profile in acceptable_profiles.keys():
+        return acceptable_profiles[profile]
+    else:
+        # its a bitrate instead, 192000 -> 192
+        return str(int(profile) / 1000)
 
 ############################
 ############################
@@ -118,7 +148,7 @@ def is_VX(f):
     Determine if the file was encoded with either -V0, -V1, or -V2
     """
     
-    return f.info.preset in acceptable.keys()
+    return f.info.preset in acceptable_profiles.keys()
 
 def has_tags(filepath):
     """
@@ -249,8 +279,6 @@ if __name__ == '__main__':
                 elif full_path.endswith('.log') or\
                       (f.startswith('folder.') and is_image(f)):
                     tmp = tmp_other
-                    if not options.silent:
-                        print bright_green("add:"), os.path.basename(full_path)
                 else:
                     tmp = None
                     if not options.silent: print blue("IGNORE:"), full_path
@@ -284,7 +312,6 @@ if __name__ == '__main__':
         ret = is_appropriate(filepath, options.bootleg)
         
         if ret == 'ADD':
-            if not options.silent: print bright_green("add:"), filename
             mp3_to_upload.append(filepath)
                   
         else:
@@ -292,10 +319,7 @@ if __name__ == '__main__':
                                          filename,\
                                          bright_red(ret)
             clean_and_exit()
-            
-    if not options.silent: print "------------"
         
-    
     # if the archive option is ~not~ used, the temp file will automatically
     # delete itself when the script terminates
     delete = not options.archive
@@ -308,7 +332,7 @@ if __name__ == '__main__':
         tags = get_tags_dict(f)
         album = clean(tags['album'])
         artist = clean(tags['artist'])
-        preset = acceptable[tags['preset']]
+        preset = profile_name(tags['preset'])
         date = clean(str(tags['date']))
         
         path_in_zip = "{artist} - ({date}) {album} [{preset}]"\
@@ -326,6 +350,8 @@ if __name__ == '__main__':
         file_on_zip = "{track} - {title}.mp3".format(title=title, track=track)
             
         s = os.path.join(path_in_zip, file_on_zip)
+        if not options.silent:
+            print bright_green("add:"), os.path.join(path_in_zip, file_on_zip)
         z.write(f, s)
             
     # now go through all non-mp3 files and add them to the zip
@@ -333,13 +359,17 @@ if __name__ == '__main__':
     for f in os.listdir(tmp_other):
         file_on_zip = os.path.basename(f)
         s = os.path.join(path_in_zip, file_on_zip)
+        if not options.silent:
+            print bright_green("add:"), os.path.join(path_in_zip, file_on_zip)
         z.write(f, s)
+    
+    if not options.silent: print "------------"
     
     ################ now do the upload
     
     if mp3_to_upload and not options.archive:
         data = dict(artist=artist, album=album, meta=options.meta,
-                    profile=preset, date=date)
+                    profile=preset, date=date, password=password)
         send_request(tmpzip, data, url, options.silent)
     elif options.archive:
         if not options.silent: print "No upload, archive only"

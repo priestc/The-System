@@ -78,6 +78,7 @@ def send_request(tmpzip, data, url, silent=False):
     mpform.add_field('album', data['album'])
     mpform.add_field('meta', data['meta'] or "")
     mpform.add_field('date', data['date'])
+    mpform.add_field('password', data['password'])
     mpform.add_field('profile', data['profile'])
     mpform.add_file('file', 'album.zip', tmpzip)
     
@@ -89,7 +90,7 @@ def send_request(tmpzip, data, url, silent=False):
     request.add_header('Content-length', len(body))
     request.add_data(body)
     
-    if not silent: print "Sending", "{0:.3} GB".format(tmpzip.tell() / 1073741824.0), "to server"
+    if not silent: print "Sending", "{0} bytes".format(tmpzip.tell()), "to server"
     try:
         print urllib2.urlopen(request).read()
     except Exception, e:

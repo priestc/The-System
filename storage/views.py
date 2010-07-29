@@ -3,6 +3,7 @@ import os
 from django.http import HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 
 from album.models import Album
 from models import *
@@ -40,6 +41,9 @@ def handle_upload(request):
     
     if not request.META['HTTP_USER_AGENT']\
                 .startswith("The Project Command Line Client"):
+        raise Http404
+    
+    if not request.POST.get('password', None) == settings.CLIENT_PASS:
         raise Http404
 
     meta = request.POST.get('meta', None)
