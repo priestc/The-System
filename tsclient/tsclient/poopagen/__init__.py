@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# mutagen aims to be an all purpose media tagging library
+# poopagen aims to be an all purpose media tagging library
 # Copyright (C) 2005  Michael Urman
 #
 # This program is free software; you can redistribute it and/or modify
@@ -10,10 +10,10 @@
 # $Id: __init__.py 4153 2007-08-05 07:07:49Z piman $
 #
 
-"""Mutagen aims to be an all purpose tagging library.
+"""poopagen aims to be an all purpose tagging library.
 
-    import mutagen.[format]
-    metadata = mutagen.[format].Open(filename)
+    import poopagen.[format]
+    metadata = poopagen.[format].Open(filename)
 
 metadata acts like a dictionary of tags in the file. Tags are generally a
 list of string-like values, but may have additional methods available
@@ -26,12 +26,12 @@ version_string = ".".join(map(str, version))
 
 import warnings
 
-import mutagen._util
+import poopagen._util
 
 class Metadata(object):
     """An abstract dict-like object.
 
-    Metadata is the base class for many of the tag objects in Mutagen.
+    Metadata is the base class for many of the tag objects in poopagen.
     """
 
     def __init__(self, *args, **kwargs):
@@ -47,7 +47,7 @@ class Metadata(object):
     def delete(self, filename=None):
         raise NotImplementedError
 
-class FileType(mutagen._util.DictMixin):
+class FileType(poopagen._util.DictMixin):
     """An abstract object wrapping tags and audio stream information.
 
     Attributes:
@@ -166,21 +166,21 @@ def File(filename, options=None):
     """
 
     if options is None:
-        from mutagen.asf import ASF
-        from mutagen.apev2 import APEv2File
-        from mutagen.flac import FLAC
-        from mutagen.id3 import ID3FileType
-        from mutagen.mp3 import MP3
-        from mutagen.oggflac import OggFLAC
-        from mutagen.oggspeex import OggSpeex
-        from mutagen.oggtheora import OggTheora
-        from mutagen.oggvorbis import OggVorbis
-        from mutagen.trueaudio import TrueAudio
-        from mutagen.wavpack import WavPack
-        from mutagen.mp4 import MP4
-        from mutagen.musepack import Musepack
-        from mutagen.monkeysaudio import MonkeysAudio
-        from mutagen.optimfrog import OptimFROG
+        from poopagen.asf import ASF
+        from poopagen.apev2 import APEv2File
+        from poopagen.flac import FLAC
+        from poopagen.id3 import ID3FileType
+        from poopagen.mp3 import MP3
+        from poopagen.oggflac import OggFLAC
+        from poopagen.oggspeex import OggSpeex
+        from poopagen.oggtheora import OggTheora
+        from poopagen.oggvorbis import OggVorbis
+        from poopagen.trueaudio import TrueAudio
+        from poopagen.wavpack import WavPack
+        from poopagen.mp4 import MP4
+        from poopagen.musepack import Musepack
+        from poopagen.monkeysaudio import MonkeysAudio
+        from poopagen.optimfrog import OptimFROG
         options = [MP3, TrueAudio, OggTheora, OggSpeex, OggVorbis, OggFLAC,
                    FLAC, APEv2File, MP4, ID3FileType, WavPack, Musepack,
                    MonkeysAudio, OptimFROG, ASF]

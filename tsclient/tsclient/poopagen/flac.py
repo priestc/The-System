@@ -1,4 +1,4 @@
-# FLAC comment support for Mutagen
+# FLAC comment support for poopagen
 # Copyright 2005 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
@@ -11,7 +11,7 @@ Read more about FLAC at http://flac.sourceforge.net.
 
 FLAC supports arbitrary metadata blocks. The two most interesting ones
 are the FLAC stream information block, and the Vorbis comment block;
-these are also the only ones Mutagen can currently read.
+these are also the only ones poopagen can currently read.
 
 This module does not handle Ogg FLAC files.
 
@@ -24,9 +24,9 @@ __all__ = ["FLAC", "Open", "delete"]
 import struct
 from cStringIO import StringIO
 from _vorbis import VCommentDict
-from mutagen import FileType
-from mutagen._util import insert_bytes
-from mutagen.id3 import BitPaddedInt
+from poopagen import FileType
+from poopagen._util import insert_bytes
+from poopagen.id3 import BitPaddedInt
 
 class error(IOError): pass
 class FLACNoHeaderError(error): pass
@@ -91,7 +91,7 @@ class StreamInfo(MetadataBlock):
     """FLAC stream information.
 
     This contains information about the audio data in the FLAC file.
-    Unlike most stream information objects in Mutagen, changes to this
+    Unlike most stream information objects in poopagen, changes to this
     one will rewritten to the file when it is saved. Unless you are
     actually changing the audio stream itself, don't change any
     attributes of this block.
@@ -474,7 +474,7 @@ class Padding(MetadataBlock):
 
     To avoid rewriting the entire FLAC file when editing comments,
     metadata is often padded. Padding should occur at the end, and no
-    more than one padding block should be in any FLAC file. Mutagen
+    more than one padding block should be in any FLAC file. poopagen
     handles this with MetadataBlock.group_padding.
     """
 

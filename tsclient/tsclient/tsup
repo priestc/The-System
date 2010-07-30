@@ -29,10 +29,10 @@ from optparse import OptionParser
 from types import ListType
 from collections import defaultdict
 
-from tsclient.utils import *
-from tsclient import mutagen
-from tsclient.multipart import send_request, check_dupe
-from tsclient.colorama import init as colorinit
+from utils import *
+import poopagen
+from multipart import send_request, check_dupe
+from colorama import init as colorinit
 
 colorinit(autoreset=True)
 
@@ -174,10 +174,10 @@ def is_appropriate(filepath, is_bootleg):
     checks for it being Vx.
     """
  
-    f = mutagen.File(filepath)
+    f = poopagen.File(filepath)
     filename = os.path.basename(filepath)
     
-    if isinstance(f, mutagen.mp3.MP3):
+    if isinstance(f, poopagen.mp3.MP3):
         if is_VX(f) or is_bootleg:
             if has_tags(filepath):      
                 return "ADD" # add to archive!
@@ -211,15 +211,15 @@ def get_tags_object(path):
     try:
         # just in case the file is corrupted, don't complain
         # (could throw any number of errors)
-        data = mutagen.File(path)
+        data = poopagen.File(path)
     except:
         # (this catches all errors because other filetypes might
         # raise all sorts of crap)
         return None
                
-    if isinstance(data, mutagen.mp3.MP3):
+    if isinstance(data, poopagen.mp3.MP3):
         try: # check if it has APEv2 tags (these take priority)
-            ape_data = mutagen.apev2.APEv2(path)
+            ape_data = poopagen.apev2.APEv2(path)
             setattr(ape_data, "info", data.info)
             return ape_data, "APE"
         except: # otherwise, read ID3v2 followed by ID3v1

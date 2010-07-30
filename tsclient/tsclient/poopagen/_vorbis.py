@@ -1,4 +1,4 @@
-# Vorbis comment support for Mutagen
+# Vorbis comment support for poopagen
 # Copyright 2005-2006 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,8 @@ import sys
 
 from cStringIO import StringIO
 
-import mutagen
-from mutagen._util import DictMixin, cdata
+import poopagen
+from poopagen._util import DictMixin, cdata
 
 try: set
 except NameError:
@@ -40,7 +40,7 @@ class error(IOError): pass
 class VorbisUnsetFrameError(error): pass
 class VorbisEncodingError(error): pass
 
-class VComment(mutagen.Metadata, list):
+class VComment(poopagen.Metadata, list):
     """A Vorbis comment parser, accessor, and renderer.
 
     All comment ordering is preserved. A VComment is a list of
@@ -51,10 +51,10 @@ class VComment(mutagen.Metadata, list):
     file-like object, not a filename.
 
     Attributes:
-    vendor -- the stream 'vendor' (i.e. writer); default 'Mutagen'
+    vendor -- the stream 'vendor' (i.e. writer); default 'poopagen'
     """
 
-    vendor = u"Mutagen " + mutagen.version_string
+    vendor = u"poopagen " + poopagen.version_string
 
     def __init__(self, data=None, *args, **kwargs):
         # Collect the args to pass to load, this lets child classes

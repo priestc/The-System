@@ -21,9 +21,9 @@ http://lists.xiph.org/pipermail/speex-dev/2006-July/004676.html.
 
 __all__ = ["OggSpeex", "Open", "delete"]
 
-from mutagen._vorbis import VCommentDict
-from mutagen.ogg import OggPage, OggFileType, error as OggError
-from mutagen._util import cdata
+from poopagen._vorbis import VCommentDict
+from poopagen.ogg import OggPage, OggFileType, error as OggError
+from poopagen._util import cdata
 
 class error(OggError): pass
 class OggSpeexHeaderError(error): pass

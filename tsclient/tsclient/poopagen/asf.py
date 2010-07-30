@@ -12,8 +12,8 @@
 __all__ = ["ASF", "Open"]
 
 import struct
-from mutagen import FileType, Metadata
-from mutagen._util import insert_bytes, delete_bytes, DictMixin
+from poopagen import FileType, Metadata
+from poopagen._util import insert_bytes, delete_bytes, DictMixin
 
 class error(IOError): pass
 class ASFError(error): pass

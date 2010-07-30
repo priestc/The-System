@@ -1,4 +1,4 @@
-# True Audio support for Mutagen
+# True Audio support for poopagen
 # Copyright 2006 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,8 @@ True Audio files use ID3 tags.
 
 __all__ = ["TrueAudio", "Open", "delete"]
 
-from mutagen.id3 import ID3FileType, delete
-from mutagen._util import cdata
+from poopagen.id3 import ID3FileType, delete
+from poopagen._util import cdata
 
 class error(RuntimeError): pass
 class TrueAudioHeaderError(error, IOError): pass

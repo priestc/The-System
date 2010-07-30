@@ -9,14 +9,14 @@
 
 """Easier access to ID3 tags.
 
-EasyID3 is a wrapper around mutagen.id3.ID3 to make ID3 tags appear
+EasyID3 is a wrapper around poopagen.id3.ID3 to make ID3 tags appear
 more like Vorbis or APEv2 tags.
 """
 
-import mutagen.id3
-from mutagen import Metadata
-from mutagen._util import DictMixin
-from mutagen.id3 import ID3, error, delete
+import poopagen.id3
+from poopagen import Metadata
+from poopagen._util import DictMixin
+from poopagen.id3 import ID3, error, delete
 
 __all__ = ['EasyID3', 'Open', 'delete']
 
@@ -28,9 +28,9 @@ class EasyID3(DictMixin, Metadata):
     are supported; EasyID3.valid_keys maps human-readable EasyID3
     names to ID3 frame IDs.
 
-    To use an EasyID3 class with mutagen.mp3.MP3:
-        from mutagen.mp3 import MP3
-        from mutagen.easyid3 import EasyID3
+    To use an EasyID3 class with poopagen.mp3.MP3:
+        from poopagen.mp3 import MP3
+        from poopagen.easyid3 import EasyID3
         MP3(filename, ID3=EasyID3)
     """
 
@@ -74,7 +74,7 @@ class EasyID3(DictMixin, Metadata):
         return [stamp.text for stamp in frame.text]
 
     def __TDRC_set(self, frame, value):
-        self.__id3.add(mutagen.id3.TDRC(encoding=3, text=value))
+        self.__id3.add(poopagen.id3.TDRC(encoding=3, text=value))
 
     def __text_get(self, frame):
         return list(frame)
@@ -99,7 +99,7 @@ class EasyID3(DictMixin, Metadata):
             frame = self.valid_keys[key]
             setter = self.__mungers.get(frame, self.__default)[1]
             if frame not in self.__id3:
-                frame = mutagen.id3.Frames[frame](encoding=3, text=value)
+                frame = poopagen.id3.Frames[frame](encoding=3, text=value)
                 self.__id3.loaded_frame(frame)
             else:
                 setter(self, self.__id3[frame], value)

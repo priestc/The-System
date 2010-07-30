@@ -55,8 +55,8 @@ class APENoHeaderError(error, ValueError): pass
 class APEUnsupportedVersionError(error, ValueError): pass
 class APEBadItemError(error, ValueError): pass
 
-from mutagen import Metadata, FileType
-from mutagen._util import DictMixin, cdata, utf8, delete_bytes
+from poopagen import Metadata, FileType
+from poopagen._util import DictMixin, cdata, utf8, delete_bytes
 
 class _APEv2Data(object):
     # Store offsets of the important parts of the file.
@@ -166,7 +166,7 @@ class _APEv2Data(object):
         fileobj.seek(start)
 
         while start > 0:
-            # Clean up broken writing from pre-Mutagen PyMusepack.
+            # Clean up broken writing from pre-poopagen PyMusepack.
             # It didn't remove the first 24 bytes of header.
             try: fileobj.seek(-24, 1)
             except IOError:
@@ -262,7 +262,7 @@ class APEv2(DictMixin, Metadata):
         data that also happens to be valid UTF-8, or an external
         reference), use the APEValue factory and set the value to the
         result of that:
-            from mutagen.apev2 import APEValue, EXTERNAL
+            from poopagen.apev2 import APEValue, EXTERNAL
             tag['Website'] = APEValue('http://example.org', EXTERNAL)
         """
 

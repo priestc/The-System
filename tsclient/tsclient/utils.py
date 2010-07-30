@@ -2,7 +2,7 @@ import Image
 import re
 
 from types import ListType
-from mutagen import id3
+from poopagen import id3
 from colorama import Fore, Back, Style
 
 def bright_green(text):
@@ -40,7 +40,7 @@ def is_image(filepath):
         # it's a proper image file!
         return True
     
-# abstract tag class. find the tags we need given a tag list from mutagen
+# abstract tag class. find the tags we need given a tag list from poopagen
 class Tags(object):
     info = {}
     def __init__(self, data):

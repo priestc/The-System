@@ -21,8 +21,8 @@ __all__ = ["OggVorbis", "Open", "delete"]
 
 import struct
 
-from mutagen._vorbis import VCommentDict
-from mutagen.ogg import OggPage, OggFileType, error as OggError
+from poopagen._vorbis import VCommentDict
+from poopagen.ogg import OggPage, OggFileType, error as OggError
 
 class error(OggError): pass
 class OggVorbisHeaderError(error): pass

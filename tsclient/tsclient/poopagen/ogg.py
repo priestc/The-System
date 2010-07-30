@@ -10,7 +10,7 @@
 
 This module reads and writes a subset of the Ogg bitstream format
 version 0. It does *not* read or write Ogg Vorbis files! For that,
-you should use mutagen.oggvorbis.
+you should use poopagen.oggvorbis.
 
 This implementation is based on the RFC 3533 standard found at
 http://www.xiph.org/ogg/doc/rfc3533.txt.
@@ -22,8 +22,8 @@ import zlib
 
 from cStringIO import StringIO
 
-from mutagen import FileType
-from mutagen._util import cdata, insert_bytes, delete_bytes
+from poopagen import FileType
+from poopagen._util import cdata, insert_bytes, delete_bytes
 
 class error(IOError):
     """Ogg stream parsing errors."""

@@ -27,9 +27,9 @@ import sys
 
 from cStringIO import StringIO
 
-from mutagen import FileType, Metadata
-from mutagen._constants import GENRES
-from mutagen._util import cdata, insert_bytes, delete_bytes, DictProxy
+from poopagen import FileType, Metadata
+from poopagen._constants import GENRES
+from poopagen._util import cdata, insert_bytes, delete_bytes, DictProxy
 
 class error(IOError): pass
 class M4AMetadataError(error): pass
@@ -38,7 +38,7 @@ class M4AMetadataValueError(ValueError, M4AMetadataError): pass
 
 import warnings
 warnings.warn(
-    "mutagen.m4a is deprecated; use mutagen.mp4 instead.", DeprecationWarning)
+    "poopagen.m4a is deprecated; use poopagen.mp4 instead.", DeprecationWarning)
 
 # This is not an exhaustive list of container atoms, but just the
 # ones this module needs to peek inside.
@@ -72,7 +72,7 @@ class Atom(object):
     name -- four byte name of the atom, as a str
     offset -- location in the constructor-given fileobj of this atom
 
-    This structure should only be used internally by Mutagen.
+    This structure should only be used internally by poopagen.
     """
 
     children = None
@@ -133,7 +133,7 @@ class Atoms(object):
     Attributes:
     atoms -- a list of top-level atoms as Atom objects
 
-    This structure should only be used internally by Mutagen.
+    This structure should only be used internally by poopagen.
     """
     def __init__(self, fileobj):
         self.atoms = []

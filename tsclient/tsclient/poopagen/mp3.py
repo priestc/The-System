@@ -1,4 +1,4 @@
-# MP3 stream header information support for Mutagen.
+# MP3 stream header information support for poopagen.
 # Copyright 2006 Joe Wreschnig
 #
 # This program is free software; you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 import os
 import struct
 
-from mutagen.id3 import ID3FileType, BitPaddedInt, delete
+from poopagen.id3 import ID3FileType, BitPaddedInt, delete
 
 class error(RuntimeError): pass
 class HeaderNotFoundError(error, IOError): pass

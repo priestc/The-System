@@ -2,8 +2,8 @@ import Image
 import re
 
 from types import ListType
-from mutagen import id3
-from colorama import Fore, Back, Style
+from tsclient.mutagen import id3
+from tsclient.colorama import Fore, Back, Style
 
 def bright_green(text):
     return "{color}{style}{text}{reset}"\

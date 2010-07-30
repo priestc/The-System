@@ -1,4 +1,4 @@
-# id3 support for mutagen
+# id3 support for poopagen
 # Copyright (C) 2005  Michael Urman
 #
 # This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@ will not interpret the / characters as a separator, and will almost
 always accept null separators to generate multi-valued text frames.
 
 Because ID3 frame structure differs between frame types, each frame is
-implemented as a different class (e.g. TIT2 as mutagen.id3.TIT2). Each
+implemented as a different class (e.g. TIT2 as poopagen.id3.TIT2). Each
 frame's documentation contains a list of its attributes.
 
 Since this file's documentation is a little unwieldy, you are probably
@@ -34,8 +34,8 @@ import struct; from struct import unpack, pack
 from zlib import error as zlibError
 from warnings import warn
 
-import mutagen
-from mutagen._util import insert_bytes, delete_bytes, DictProxy
+import poopagen
+from poopagen._util import insert_bytes, delete_bytes, DictProxy
 
 class error(Exception): pass
 class ID3NoHeaderError(error, ValueError): pass
@@ -51,7 +51,7 @@ class ID3Warning(error, UserWarning): pass
 def is_valid_frame_id(frame_id):
 	return frame_id.isalnum() and frame_id.isupper()
 
-class ID3(DictProxy, mutagen.Metadata):
+class ID3(DictProxy, poopagen.Metadata):
 	"""A file with an ID3v2 tag.
 
 	Attributes:
@@ -92,15 +92,15 @@ class ID3(DictProxy, mutagen.Metadata):
 		Keyword arguments:
 		filename -- filename to load tag data from
 		known_frames -- dict mapping frame IDs to Frame objects
-		translate -- Update all tags to ID3v2.4 internally. Mutagen is
+		translate -- Update all tags to ID3v2.4 internally. poopagen is
 					 only capable of writing ID3v2.4 tags, so if you
 					 intend to save, this must be true.
 
 		Example of loading a custom frame:
-			my_frames = dict(mutagen.id3.Frames)
+			my_frames = dict(poopagen.id3.Frames)
 			class XMYF(Frame): ...
 			my_frames["XMYF"] = XMYF
-			mutagen.id3.ID3(filename, known_frames=my_frames)
+			poopagen.id3.ID3(filename, known_frames=my_frames)
 		"""
 
 		from os.path import getsize
@@ -1048,7 +1048,7 @@ class Frame(object):
 			if tflags & Frame.FLAG24_COMPRESS:
 				try: data = data.decode('zlib')
 				except zlibError, err:
-					# the initial mutagen that went out with QL 0.12 did not
+					# the initial poopagen that went out with QL 0.12 did not
 					# write the 4 bytes of uncompressed size. Compensate.
 					data = datalen_bytes + data
 					try: data = data.decode('zlib')
@@ -1206,7 +1206,7 @@ class UrlFrame(Frame):
 	"""A frame containing a URL string.
 
 	The ID3 specification is silent about IRIs and normalized URL
-	forms. Mutagen assumes all URLs in files are encoded as Latin 1,
+	forms. poopagen assumes all URLs in files are encoded as Latin 1,
 	but string conversion of this frame returns a UTF-8 representation
 	for compatibility with other string conversions.
 
@@ -1234,7 +1234,7 @@ class TCON(TextFrame):
 	use the 'genres' property rather than the 'text' attribute.
 	"""
 
-	from mutagen._constants import GENRES
+	from poopagen._constants import GENRES
 
 	def __get_genres(self):
 		genres = []
@@ -1528,7 +1528,7 @@ class APIC(Frame):
 	desc -- a text description of the image
 	data -- raw image data, as a byte string
 
-	Mutagen will automatically compress large images when saving tags.
+	poopagen will automatically compress large images when saving tags.
 	"""
 	_framespec = [ EncodingSpec('encoding'), Latin1TextSpec('mime'),
 		ByteSpec('type'), EncodedTextSpec('desc'), BinaryDataSpec('data') ]
@@ -1599,7 +1599,7 @@ class RBUF(FrameOpt):
 	info -- if ID3 tags may be elsewhere in the file (optional)
 	offset -- the location of the next ID3 tag, if any
 
-	Mutagen will not find the next tag itself.
+	poopagen will not find the next tag itself.
 	"""
 	_framespec = [ SizedIntegerSpec('size', 3) ]
 	_optionalspec = [ ByteSpec('info'), SizedIntegerSpec('offset', 4) ]
@@ -1616,7 +1616,7 @@ class AENC(FrameOpt):
 	preview_length -- number of unencrypted blocks
 	data -- data required for decryption (optional)
 
-	Mutagen cannot decrypt files.
+	poopagen cannot decrypt files.
 	"""
 	_framespec = [ Latin1TextSpec('owner'),
 				   SizedIntegerSpec('preview_start', 2),
@@ -1720,7 +1720,7 @@ class ENCR(Frame):
 	"""Encryption method registration.
 
 	The standard does not allow multiple ENCR frames with the same owner
-	or the same method. Mutagen only verifies that the owner is unique.
+	or the same method. poopagen only verifies that the owner is unique.
 	"""
 	_framespec = [ Latin1TextSpec('owner'), ByteSpec('method'),
 				   BinaryDataSpec('data') ]
@@ -1761,7 +1761,7 @@ class SIGN(Frame):
 class SEEK(Frame):
 	"""Seek frame.
 
-	Mutagen does not find tags at seek offsets.
+	poopagen does not find tags at seek offsets.
 	"""
 	_framespec = [ IntegerSpec('offset') ]
 	def __pos__(self): return self.offset
@@ -1941,7 +1941,7 @@ def MakeID3v1(id3):
 	return ("TAG%(title)s%(artist)s%(album)s%(year)s%(comment)s"
 			"%(track)s%(genre)s") % v1 
 
-class ID3FileType(mutagen.FileType):
+class ID3FileType(poopagen.FileType):
 	"""An unknown type of file with ID3 tags."""
 
 	class _Info(object):
@@ -1957,7 +1957,7 @@ class ID3FileType(mutagen.FileType):
 		"""Add an empty ID3 tag to the file.
 
 		A custom tag reader may be used in instead of the default
-		mutagen.id3.ID3 object, e.g. an EasyID3 reader.
+		poopagen.id3.ID3 object, e.g. an EasyID3 reader.
 		"""
 		if self.tags is None:
 			self.tags = ID3()
@@ -1968,7 +1968,7 @@ class ID3FileType(mutagen.FileType):
 		"""Load stream and tag information from a file.
 
 		A custom tag reader may be used in instead of the default
-		mutagen.id3.ID3 object, e.g. an EasyID3 reader.
+		poopagen.id3.ID3 object, e.g. an EasyID3 reader.
 		"""
 		self.filename = filename
 		try: self.tags = ID3(filename, **kwargs)
