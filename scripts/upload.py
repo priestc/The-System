@@ -33,14 +33,14 @@ from types import ListType
 from collections import defaultdict
 
 import mutagen
-from multipart import send_request
+from multipart import send_request, check_dupe
 
 from colorama import init as colorinit
 colorinit(autoreset=True)
 
 ############################
 
-url = 'http://thesystem.chickenkiller.com/upload'
+url = 'http://thesystem.chickenkiller.com'
 
 ############################
 
@@ -106,7 +106,7 @@ if (not options.archive) and password == '':
     raise SystemExit
 
 if options.local:
-    url = 'http://localhost:8000/upload'
+    url = 'http://localhost:8000'
 
 # get the path to the directory to upload.
 try:
@@ -369,6 +369,19 @@ if __name__ == '__main__':
         z.write(f, s)
     
     if not options.silent: print "------------"
+    
+    ################ check that this album hasnt already been uploaded
+    
+    result = check_dupe(artist, album, url)
+
+    if result == 'Yes':
+        print bright_red("This album has already been uploaded")
+        clean_and_exit()
+    elif result == 'No':
+        pass
+    else:
+        print bright_red("Error occured when checking for dupe")
+        clean_and_exit()
     
     ################ now do the upload
     

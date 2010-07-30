@@ -2,6 +2,7 @@ import itertools
 import mimetools
 import mimetypes
 from cStringIO import StringIO
+import urllib
 import urllib2
 
 USER_AGENT = 'The Project Command Line Client v0.1'
@@ -84,7 +85,7 @@ def send_request(tmpzip, data, url, silent=False):
     
     body = str(mpform)
     
-    request = urllib2.Request(url)
+    request = urllib2.Request(url + "/upload")
     request.add_header('User-agent', USER_AGENT)
     request.add_header('Content-type', mpform.get_content_type())
     request.add_header('Content-length', len(body))
@@ -95,4 +96,11 @@ def send_request(tmpzip, data, url, silent=False):
         print urllib2.urlopen(request).read()
     except Exception, e:
         print e.read()
+
+def check_dupe(artist, album, url):
+    data = urllib.urlencode(dict(album=album, artist=artist))
+    return urllib2.urlopen(url + "/album/check_dupe", data=data).read()
+
+
+
 

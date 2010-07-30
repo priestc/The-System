@@ -48,12 +48,10 @@ def handle_upload(request):
     artist = request.POST.get('artist', None)
     date = request.POST.get('date', None)
     profile = request.POST.get('profile', None)
-      
     f = request.FILES['file']
-    size = f.size
     
     album_obj = Album(artist=artist, profile=profile, date=date,
-                      album=album, meta=meta, size=size)
+                      album=album, meta=meta, size=(f.size/1073741824))
     album_obj.save()
     
     save_location = os.path.join(settings.UPLOAD_PATH, album_obj.filename)
@@ -65,4 +63,4 @@ def handle_upload(request):
     
     upload_to_remote_storage.delay(album_obj.pk, destination.name)
     
-    return HttpResponse(size + 'bytes recieved from client!!!', mimetype='text/plain')
+    return HttpResponse(str(f.size) + ' bytes recieved from client!!!', mimetype='text/plain')

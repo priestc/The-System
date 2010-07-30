@@ -22,3 +22,14 @@ def copy_s3(orig, dest, name):
 
     
     return True
+
+def match(st1, st3):
+    """
+    Returns the class of the two storage engines if they are the same,
+    otherwise, return None. If the two storage engines are the same, we can
+    mirror by copying the file remotely, instead of uploading it another time,
+    hence saving bandwidth. 
+    """
+    
+    if type(st1) == type(st2):
+        return type(st2)

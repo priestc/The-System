@@ -63,11 +63,11 @@ def upload_to_remote_storage(album_pk, filepath):
     # find a storage and then send it there, return the storage where we put it 
     st1 = upload(album, filepath, storages)
     
-    # find another storage, and copy it from the first location
-    st2 = mirror(album, storages, st1)
-    
-    # mirror again, this time copy it from the second location
-    mirror(album, storages, st2)
+#    # find another storage, and copy it from the first location
+#    st2 = mirror(album, storages, st1)
+#    
+#    # mirror again, this time copy it from the second location
+#    mirror(album, storages, st2)
     
     shutil.move(filepath, settings.DELETE_PATH)
     
