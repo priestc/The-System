@@ -2,43 +2,71 @@
 
 {% block content %}
 
-<h2>How it all works</h2>
-<ul>
-    <li>
-        Download the archive above and extract the files into some directory.
-        You much have python 2.6 or 2.7 installed. Python 2.5 or earlier and
-        versions above 3.0 will not work.
-    </li>
-    
-    <li>
-        Navigate on the commandline to the folder where the album lives that
-        you want to upload. Run the following command: "/path/to/upload.py"
-    </li>
-    
-    <li>
-        The script will them output which files it finds appropriate (ones that are
-        MP3 files and encoded with either -V2, -V1, --aps, etc), puts them into
-        a zip archive and then uploads it to the server.
-    </li>
-    
-    <li>
-        Once the server gets the file, it adds it to the upload queue where it
-        will eventually be sent off to three different S3 accounts.
-    </li>
-    
-    <li>
-        Once the uploading has been completed, the album will appear in the
-        album list <a href="{% url view_albums %}">located here</a>.
-    </li>
-</ul>
-<h2>Installation</h2>
+<h2>Installation and Useage</h2>
 
 <ul>
     <li>Extract zip file. Run "python setup.py install", then you can invoke the
-    script by typing "tsup --help"
+    script by typing "tsup [options]"
     </li>
-
 </ul>
+
+<table border="1">
+    <tr>
+        <th>option</th><th>Description</th>
+    </tr>
+    
+    <tr>
+        <td>--help</td>
+        <td>get a list of all options</td>
+    </tr>
+    
+    <tr>
+        <td>--artist="ARTIST"</td>
+        <td>override the ID3/APE artist tags with this value</td>
+    </tr>
+    
+    <tr>
+        <td>--album="ALBUM'</td>
+        <td>override the ID3/APE album tags with this value</td>
+    </tr>
+    
+    <tr>
+        <td>--meta="META'</td>
+        <td>set meta information about this album (see next section)</td>
+    </tr>
+    
+    <tr>
+        <td>--verify</td>
+        <td>Ask you if you want to proceed before it starts the upload</td>
+    </tr>
+    
+    <tr>
+        <td>--password="xxx"</td>
+        <td>Set the password -- <strong>REQUIRED</strong></td>
+    </tr>
+    
+    <tr>
+        <td>--archive-only</td>
+        <td>Add this option to get the resulting archive (no upload)</td>
+    </tr>
+    
+    <tr>
+        <td>--bootleg</td>
+        <td>This album is so rare, it's only availiable in 192kbps.
+        Use this option wisely. It disables LAME profile checking.</td>
+    </tr>
+    
+    <tr>
+        <td>--silent</td>
+        <td>No output except for the server response.</td>
+    </tr>
+</table>
+<br><br>
+<strong>Note:</strong> The script does not have a progress meter, so it may
+appear to hang while it's uploading. Once the upload is done, it will print
+"recieved XXXXXX bytes from server!". Also, when albums get uploaded to the
+server, they get added to the S3 mirror queue. While they are in the queue,
+the albums will appear on the site, but they will appear to have no mirrors.
 
 <h2>Upload requirements</h2>
 <ul>
@@ -52,36 +80,43 @@
         The date must be the date of the original release of the album. If the
         album was first released in 1992, but was remastered in 2003, the date
         in the ID3 tags should be 1992. If you are uploading the 2003 remastered
-        version, then the meta value (see below) should be set to "2003 remaster"
+        version, then the meta value (see below) should be set to "2003 remaster".
+        Live albums can be tagged as either just the year, or the full date in
+        "YYYY-MM-DD" format.
     </li>
 
     <li>
         The album should be set to the actual album name the artist intended. Do
         not have the album be tagged as "The Chronic (remastered)", it should be
-        tagged as "The Chronic".
+        tagged as just "The Chronic".
     </li>
     
     <li>
         The meta value of the album should be any information about the album
         that relates to the source of the rip. Exaqmples are "2003 remastered", 
         "vinyl rip", "cassette rip", "2005 reissue", "Remastered and Relit edition",
-        etc.
+        "Fan-made compliation", etc.
     </li>    
     
     <li>
-        If the album you want to upload does not conform to these standards, you
+        If the album you want to upload is not tagged to these standards, you
         can override the value in the ID3/APE tags by using the commandline arguments
         such as:
         
         <br><br>
         <em>tsup --artist="Dr. Dre" --album="The Chronic"
-        --meta="Remastered and Relit 2009" --date="1992"</em>
+        --meta="Remastered and Relit 2009" --date="1992" --password='xxx'</em>
         <br><br>
         
         This option will
         copy the mp3 files to a temp location, edit those tags with the new info
-        and then use those iles to make the archive. These extra options do not
+        and then use those files to make the archive. These extra options do not
         change any tags on the original files.
+    </li>
+    
+    <li>
+        You must include a password in the form: <em>--password='xx'</em> in order
+        for the upload to work. Get the password you-know-where.
     </li>
 </ul>
 
