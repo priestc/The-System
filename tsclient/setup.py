@@ -7,5 +7,5 @@ setup(
       version='1.0',
       description='The System uploader clent',
       scripts=['tsclient/tsup'],
-      packages=['tsclient', 'tsclient.mutagen', 'tsclient.colorama'],
+      packages=['tsclient', 'poopagen', 'colorama'],
      )

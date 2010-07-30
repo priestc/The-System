@@ -29,9 +29,9 @@ from optparse import OptionParser
 from types import ListType
 from collections import defaultdict
 
-from utils import *
+from tsclient.utils import *
 import poopagen
-from multipart import send_request, check_dupe
+from tsclient.multipart import send_request, check_dupe
 from colorama import init as colorinit
 
 colorinit(autoreset=True)

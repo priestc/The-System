@@ -1,4 +1,6 @@
 *.pyc
+tsclient/build/
+tsclient/dist/
 manage.py
 .ts_env/
 local_settings.py
