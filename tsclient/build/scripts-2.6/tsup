@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/home/chris/test/bin/python
 
 """This script does the following:
     
@@ -25,17 +25,15 @@ import shutil
 import tempfile
 import zipfile
 
-from utils import *
-
 from optparse import OptionParser
 from types import ListType
-
 from collections import defaultdict
 
-import mutagen
-from multipart import send_request, check_dupe
+from tsclient.utils import *
+from tsclient import mutagen
+from tsclient.multipart import send_request, check_dupe
+from tsclient.colorama import init as colorinit
 
-from colorama import init as colorinit
 colorinit(autoreset=True)
 
 ############################

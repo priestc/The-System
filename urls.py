@@ -20,7 +20,13 @@ urlpatterns = patterns('',
     (r'^storage/', include('storage.urls')),
     (r'^album/', include('album.urls')),
     
-    (r'^upload$', 'storage.views.handle_upload'),  
+    (r'^upload$', 'storage.views.handle_upload'),
+    
+    (
+        r'^media/(?P<path>.*)$',
+        'django.views.static.serve',
+        {'document_root': '/srv/the_system/media', 'show_indexes': True},
+    ),
 )
 
 urlpatterns += patterns('django.contrib.auth',

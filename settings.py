@@ -104,4 +104,5 @@ from local_settings import *
 LOGIN_EXEMPT_URLS = (
     r'^upload$',
     r'^album/check_dupe$',
+    r'^storage/set_bandwidth$',
 ) 

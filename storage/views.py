@@ -30,6 +30,23 @@ def list_storage(request):
     return locals()
 
 @csrf_exempt
+def set_bandwidth(request):
+    """
+    Increments the storage's bandwidth by the size of the album
+    """
+    
+    album_pk = request.POST['album']
+    st_pk = request.POST['storage']
+    
+    size = Album.objects.only('size').get(pk=album_pk).size
+    storage = GenericStorage.objects.get(pk=st_pk)
+    
+    storage.current_bandwidth = storage.current_bandwidth + size
+    storage.save()
+    
+    return HttpResponse("OK", mimetype="text/plain")
+
+@csrf_exempt
 def handle_upload(request):
     """
     All uploads are handled by this view. It takes the file, saves it to the
@@ -63,4 +80,5 @@ def handle_upload(request):
     
     upload_to_remote_storage.delay(album_obj.pk, destination.name)
     
-    return HttpResponse(str(f.size) + ' bytes recieved from client!!!', mimetype='text/plain')
+    return HttpResponse('%s bytes recieved from client!!!' % f.size,
+                        mimetype='text/plain')
