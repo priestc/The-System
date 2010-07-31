@@ -17,7 +17,7 @@ def s3_dl(storage, album):
     if key:
         #url = key.generate_url(60)
         return '<a href="{url}" class="download_link album-{a} storage-{s}">{name}</a>'\
-                 .format(name=storage.name, url="url", a=album.pk, s=storage.pk)
+                 .format(name=storage.name, url=url, a=album.pk, s=storage.pk)
     else:
         return '{name} - ERROR: COULD NOT MAKE LINK'.format(name=storage.name)
 

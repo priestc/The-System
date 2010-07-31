@@ -119,7 +119,7 @@ class GenericStorage(models.Model):
             # (when the model has been saved)
             return 0
         
-        return 0 #self.albums.aggregate(models.Sum('size'))['size__sum']
+        return self.albums.aggregate(models.Sum('size'))['size__sum']
 
 
 class S3Bucket(GenericStorage):

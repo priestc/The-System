@@ -61,7 +61,7 @@ def handle_upload(request):
     profile = request.POST.get('profile', None)
     
     album_obj = Album(artist=artist, profile=profile, date=date,
-                      album=album, meta=meta, size=(f.size/1073741824))
+                      album=album, meta=meta, size=(f.size/1073741824.0))
     album_obj.save()
     
     save_location = os.path.join(settings.UPLOAD_PATH, album_obj.filename)
