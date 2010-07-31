@@ -21,7 +21,7 @@ class Album(models.Model):
     date_added = models.DateTimeField(auto_now_add=True)
     
     storages = models.ManyToManyField("storage.GenericStorage", related_name='albums', blank=True)
-    filename = models.CharField(max_length=44, unique=True, editable=False)
+    filename = models.CharField(max_length=44, unique=True)
     
     class Meta:
         unique_together = (('artist', 'album', 'meta'),)
