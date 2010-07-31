@@ -98,7 +98,7 @@ class GenericStorage(models.Model):
         if this node is unlimited, return a really big number
         """
         
-        if self.unlimited_size:
+        if self.unlimited_storage:
             return 99999999
             
         left = self.max_storage - self.current_storage
