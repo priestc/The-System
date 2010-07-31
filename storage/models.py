@@ -14,7 +14,7 @@ class GenericStorage(models.Model):
     internal_name = models.CharField(max_length=64, editable=False, blank=True)
     max_storage = models.FloatField(help_text="In Gigabytes (0=unlimited)", default=0)
     max_bandwidth = models.FloatField(help_text="In Gigabytes per month (0=unlimited)", default=0)
-    current_bandwidth = models.FloatField(default=0, editable=False)
+    current_bandwidth = models.FloatField(default=0)
     date_added = models.DateTimeField(auto_now_add=True)
     
     def __unicode__(self):
@@ -114,7 +114,7 @@ class GenericStorage(models.Model):
         Returns the total size of all albums stored in this bucket in Gigabytes
         """
         
-        if not self.pk:
+        if not self.pk or not self.albums.exists():
             # self.albums is not availiable until a pk is set
             # (when the model has been saved)
             return 0
