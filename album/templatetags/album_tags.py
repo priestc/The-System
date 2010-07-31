@@ -15,7 +15,7 @@ def s3_dl(storage, album):
         return '{name} - out of bandwidth'.format(name=storage.name)
     
     if key:
-        #url = key.generate_url(60)
+        url = key.generate_url(60)
         return '<a href="{url}" class="download_link album-{a} storage-{s}">{name}</a>'\
                  .format(name=storage.name, url=url, a=album.pk, s=storage.pk)
     else:
