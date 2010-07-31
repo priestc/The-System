@@ -375,10 +375,13 @@ if __name__ == '__main__':
         z.write(f, s)
     
     if not options.silent: print "------------"
+    z.close()
     
     ################ check that this album hasnt already been uploaded
     
-    result = check_dupe(artist, album, url)
+    result = "No"
+    if not options.archive:
+        result = check_dupe(artist, album, url)
 
     if result == 'Yes':
         print bright_red("This album has already been uploaded")
@@ -407,8 +410,6 @@ if __name__ == '__main__':
         clean_and_exit()
         
     ############### cleanup
-
-    z.close()
 
     if options.archive:
         #if the archive option is used, we have to manually delete the temp file

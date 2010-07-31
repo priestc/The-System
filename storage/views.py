@@ -71,6 +71,9 @@ def handle_upload(request):
         destination.write(chunk)
     destination.close()
     
+    return HttpResponse('%s bytes recieved from client!!!' % f.size,
+                        mimetype='text/plain')
+    
     if not request.META['HTTP_USER_AGENT']\
                 .startswith("The Project Command Line Client"):
         raise Http404
@@ -80,5 +83,5 @@ def handle_upload(request):
         
     upload_to_remote_storage.delay(album_obj.pk, destination.name)
     
-    return HttpResponse('%s bytes recieved from client!!!' % f.size,
-                        mimetype='text/plain')
+    
+    
