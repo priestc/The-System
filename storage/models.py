@@ -210,9 +210,10 @@ class S3Bucket(GenericStorage):
         
         if not self.user_id:
             conn = self.get_connection()
-            return conn.get_canonical_user_id()
-        else:
-            return self.user_id
+            self.user_id = conn.get_canonical_user_id()
+            self.save()
+
+        return self.user_id
 
 
     def upload(self, path, upload_name):
