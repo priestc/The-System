@@ -31,6 +31,11 @@
     </tr>
     
     <tr>
+        <td>--date="DATE'</td>
+        <td>override the ID3/APE date tags with this value</td>
+    </tr>
+    
+    <tr>
         <td>--meta="META'</td>
         <td>set meta information about this album (see next section)</td>
     </tr>
@@ -61,12 +66,17 @@
         <td>No output except for the server response.</td>
     </tr>
 </table>
+
 <br><br>
 <strong>Note:</strong> The script does not have a progress meter, so it may
 appear to hang while it's uploading. Once the upload is done, it will print
 "recieved XXXXXX bytes from server!". Also, when albums get uploaded to the
 server, they get added to the S3 mirror queue. While they are in the queue,
 the albums will appear on the site, but they will appear to have no mirrors.
+
+<h2>Changelog</h2>
+v0.1 (07-29-2010) - initial release<br>
+v0.2 (07-31-2010) - added --date option
 
 <h2>Upload requirements</h2>
 <ul>
@@ -120,6 +130,6 @@ the albums will appear on the site, but they will appear to have no mirrors.
     </li>
 </ul>
 
-<big><a href="{{ MEDIA_URL }}tsclient.zip">Downoad script here</a><big>
+<big><a href="{{ MEDIA_URL }}tsclient.zip">Downoad script here (v0.2) 07-30-2010</a><big>
 
 {% endblock %}
