@@ -50,10 +50,10 @@ parser.add_option('-p', "--password",
                   default=None,
                   help="The password for the whole thing to work (gotten from you-know-where)")
 
-parser.add_option('-v', "--verify",
-                  dest="verify",
+parser.add_option('-k', "--skip-verify",
+                  dest="skip_verify",
                   action="store_true",
-                  help="Verify before uploading")
+                  help="Skip Verification before uploading")
                   
 parser.add_option('-a', "--artist",
                   dest="artist",
@@ -379,22 +379,21 @@ if __name__ == '__main__':
     
     ################ check that this album hasnt already been uploaded
     
-    result = "No"
     if not options.archive:
         result = check_dupe(artist, album, url)
 
-    if result == 'Yes':
-        print bright_red("This album has already been uploaded")
-        clean_and_exit()
-    elif result == 'No':
-        pass
-    else:
-        print bright_red("Error occured when checking for dupe")
-        clean_and_exit()
+        if result == 'Yes':
+            print bright_red("This album has already been uploaded")
+            clean_and_exit()
+        elif result == 'No':
+            pass
+        else:
+            print bright_red("Error occured when checking for dupe")
+            clean_and_exit()
     
     ################ now do the upload
     
-    if options.verify:
+    if not options.skip_verify:
         answer = raw_input("Does the above look all right? Y/n?")
         if answer.upper() == 'N':
             clean_and_exit()
