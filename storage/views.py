@@ -53,19 +53,12 @@ def handle_upload(request):
     local filesystem, then adds the S3 upload to the upload queue.
     """
     
-    if not request.META['HTTP_USER_AGENT']\
-                .startswith("The Project Command Line Client"):
-        raise Http404
-    
-    if not request.POST.get('password', None) == settings.CLIENT_PASS:
-        raise Http404
-
+    f = request.FILES['file']
     meta = request.POST.get('meta', None)
     album = request.POST.get('album', None)
     artist = request.POST.get('artist', None)
     date = request.POST.get('date', None)
     profile = request.POST.get('profile', None)
-    f = request.FILES['file']
     
     album_obj = Album(artist=artist, profile=profile, date=date,
                       album=album, meta=meta, size=(f.size/1073741824))
@@ -78,6 +71,13 @@ def handle_upload(request):
         destination.write(chunk)
     destination.close()
     
+    if not request.META['HTTP_USER_AGENT']\
+                .startswith("The Project Command Line Client"):
+        raise Http404
+    
+    if not request.POST.get('password', None) == settings.CLIENT_PASS:
+        raise Http404
+        
     upload_to_remote_storage.delay(album_obj.pk, destination.name)
     
     return HttpResponse('%s bytes recieved from client!!!' % f.size,
