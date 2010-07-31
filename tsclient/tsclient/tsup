@@ -42,7 +42,7 @@ url = 'http://thesystem.chickenkiller.com'
 
 ############################
 
-parser = OptionParser(usage="%prog [PATH] [options]", version="0.1")
+parser = OptionParser(usage="%prog [PATH] [options]", version="0.2")
 
 parser.add_option('-p', "--password",
                   dest="password",
@@ -64,6 +64,11 @@ parser.add_option('-b', "--album",
                   dest="album",
                   metavar="ALBUM",
                   help="Manually set the album name (ignore ID3 tags)")
+
+parser.add_option('-d', "--date",
+                  dest="date",
+                  metavar="DATE",
+                  help="Manually set the date (ignore ID3 tags)")
 
 parser.add_option('-m', "--meta",
                   dest="meta",
@@ -309,6 +314,9 @@ if __name__ == '__main__':
         if options.album:
             set_tag(filepath, 'album', options.album)
             
+        if options.date:
+            set_tag(filepath, 'date', options.date)
+                
         if options.meta:
             set_tag(filepath, 'comment', options.meta, append=True)
             
