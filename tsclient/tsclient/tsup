@@ -1,368 +1,139 @@
 #!/usr/bin/env python
-
-"""This script does the following:
-    
-First it takes all files in either the current directory, or the passed in path
-and copies them into a temp folder.
-
-Then it looks at each file and determines if it should be added to the archive
-based on the filename, LAME encoding and tags present.
-
-it then takes all eligible files and adds them to a zip archive. The zip archive
-is then uploaded to the project's master server
-
-"""
-# enter the default password below
-password = ''
-
-
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 as
-# published by the Free Software Foundation.
-
-import os
-import shutil
+import sys
 import tempfile
-import zipfile
+import shutil
 
-from optparse import OptionParser
-from types import ListType
-from collections import defaultdict
+from tsclient.app import *
+from tsclient.options import *
+from tsclient.http import *
 
-from tsclient.utils import *
-import poopagen
-from tsclient.multipart import send_request, check_dupe
-from colorama import init as colorinit
-
-colorinit(autoreset=True)
-
-############################
-
-url = 'http://thesystem.chickenkiller.com'
-
-############################
-
-if options.password:
-    password = options.password
-
-if (not options.archive) and password == '':
-    print "Password Required"
-    raise SystemExit
-
-if options.local:
-    url = 'http://localhost:8000'
-
-# get the path to the directory to upload.
-try:
-    path = args[0]
-except IndexError:
-    # if no path was specified, then use the current working directory
-    path = os.getcwd()
-
-############################
-
-def is_VX(f):
-    """
-    Determine if the file was encoded with either -V0, -V1, or -V2
-    In: a poopagen file instance
-    """
-    
-    return f.info.preset in ACCEPTABLE_PROFILES.keys()
-
-def has_tags(filepath):
-    """
-    Does the mp3 have all the correct tags?
-    """
-    
-    t = get_tags_dict(filepath)
-    if t:
-        return bool(t['artist'] and t['album'] and t['track'] and t['date'])
-    
-    return False
-
-############################
-
-# all mp3 presets that are allowed. Also, mappings to a shorthand name
-# use a defaultdict to handle when the preset is actually a bitrate
-
-ACCEPTABLE_PROFILES = {"--alt-preset extreme": "-ape",
-         "--alt-preset standard": "-aps",
-         "--alt-preset fast standard": "-apfs",
-         "--alt-preset fast extreme": "-apfe",
-         "--alt-preset insane": "-api",
-         "-V 0": "-V0",
-         "-V 0 --vbr-new": "-V0",
-         "-V 1": "-V1",
-         "-V 1 --vbr-new": "-V1",
-         "-V 2": "-V2",
-         "-V 2 --vbr-new": "-V2",
-}
-
-def profile_name(profile):
-    """
-    Returns a shorthand formatted version of the profile/bitrate.
-    """
-    
-    if profile in ACCEPTABLE_PROFILES.keys():
-        return ACCEPTABLE_PROFILES[profile]
-    else:
-        # its a bitrate instead, 192000 -> 192
-        return str(int(profile) / 1000)
-
-############################
-############################
-
-def is_appropriate(filepath, is_bootleg):
-    """
-    If the file is appropriate (lame mp3 with proper tags), return 'ADD'
-    so the file gets added to the zip archive. If the file is a log file or
-    other white listed file, it gets added too. MP3 files that are not LAME VX
-    or are not tagged properly return 'REJECTED'. Anything else returns
-    'IGNORE' to be silently ignored. If the file is a bootleg, ignore the
-    checks for it being Vx.
-    """
- 
-    f = poopagen.File(filepath)
-    filename = os.path.basename(filepath)
-    
-    if isinstance(f, poopagen.mp3.MP3):
-        if is_VX(f) or is_bootleg:
-            if has_tags(filepath):      
-                return "ADD" # add to archive!
-            else:
-                return "MISSING TAGS"
-        else:
-            return "NOT VX"
-            
-    return "IGNORE"
-
-def set_tag(path, tag, value, append=False):
-    """
-    Edit the mp3 in the path's tags to reflect the new value
-    this function works for either ID3 or APE tagged MP3's
-    """
-
-    data, tag_type = get_tags_object(path)
-    
-    if tag_type == "APE":
-        tags = APE(data)
-    elif tag_type == 'ID3':
-        tags = MP3(data)
-
-    tags.set_value(tag, value, append=append)
-
-def get_tags_object(path):
-    """
-    Get the tag object. Used for getting and setting tag information
-    """
-    
-    try:
-        # just in case the file is corrupted, don't complain
-        # (could throw any number of errors)
-        data = poopagen.File(path)
-    except:
-        # (this catches all errors because other filetypes might
-        # raise all sorts of crap)
-        return None
-               
-    if isinstance(data, poopagen.mp3.MP3):
-        try: # check if it has APEv2 tags (these take priority)
-            ape_data = poopagen.apev2.APEv2(path)
-            setattr(ape_data, "info", data.info)
-            return ape_data, "APE"
-        except: # otherwise, read ID3v2 followed by ID3v1
-            return data, "ID3"
-
-    else:
-        return None
-
-def get_tags_dict(path):
-    """
-    Returns a dict of all the tags in the file (if it has any)
-    """
-    
-    data, tag_type = get_tags_object(path)
-    
-    if tag_type == "APE":
-        tags = APE(data).info
-    elif tag_type == 'ID3':
-        tags = MP3(data).info
-
-    # doggone tag libraries alwaystrying to be cute
-
-    if tags['track'] and ("/" in tags['track']):
-        t = tags['track']
-        index = t.find('/')
-        tags['track'] = t[:index]
-        
-    if tags['disc'] and ("/" in tags['disc']):
-        t = tags['disc']
-        index = t.find('/')
-        tags['disc'] = t[:index]
-        
-    return tags
-         
-############################
-############################
-
-# create temp dirs
 base_tmp = tempfile.mkdtemp()
-tmp_mp3 = os.path.join(base_tmp, 'mp3')
-tmp_other = os.path.join(base_tmp, 'other')
 
-os.mkdir(tmp_mp3)
-os.mkdir(tmp_other)
-
-def clean_and_exit():
+def do_exit():
     shutil.rmtree(base_tmp)
     raise SystemExit
 
 if __name__ == '__main__':
     
-    # move all files to the temp directory
+    try:
+        fl = FileList(options.path, options.bootleg)
+        lists = fl.get_lists()
+    except ImproperMP3Error, e:
+        # show any show stopper errors, such as finding a file
+        # named *.mp3 but its not an mp3
+        print bright_red(e)
+        do_exit()
     
-    for root, dirs, files in os.walk(path):
-        for f in files:
-            full_path = os.path.join(root, f)
-            if os.stat(full_path).st_size < 104857600:
-                if full_path.endswith('.mp3'):
-                    tmp = tmp_mp3
-                elif full_path.endswith('.log') or\
-                      (f.startswith('folder.') and is_image(f)):
-                    tmp = tmp_other
-                else:
-                    tmp = None
-                    if not options.silent: print blue("IGNORE:"), full_path
-                    
-                if tmp:
-                    temp_path = os.path.join(tmp, f)
-                    shutil.copyfile(full_path, temp_path)
-                
-            else:
-                # ignore any file larger than 100 MiB
-                if not options.silent: print blue("TOO BIG, IGNORING:"), full_path
-                
+    if not options.silent and fl.warnings:
+        # show things like skipped .m3u files and crap
+        print "\n".join(fl.warnings)
     
-    # list of all files that will be added to the zip
-    mp3_to_upload = []
+    # replace the list of paths with the list of temp paths   
+    lists = copy_to_temp(lists['mp3s'], lists['others'], base_tmp)
     
-    # get all filenames in the mp3 temp dir
-    # (where we have already copied all files to)
-    for filename in sorted(os.listdir(tmp_mp3)):
-        filepath = os.path.join(tmp_mp3, filename)
+    if options.artist:
+        set_tags(lists['mp3s'], 'artist', options.artist)
         
-        if options.artist:
-            set_tag(filepath, 'artist', options.artist)
+    if options.album:
+        set_tags(lists['mp3s'], 'album', options.album)
+        
+    if options.date:
+        set_tags(lists['mp3s'], 'date', options.date)
             
-        if options.album:
-            set_tag(filepath, 'album', options.album)
-            
-        if options.date:
-            set_tag(filepath, 'date', options.date)
-                
-        if options.meta:
-            set_tag(filepath, 'comment', options.meta, append=True)
-            
-        ret = is_appropriate(filepath, options.bootleg)
-        
-        if ret == 'ADD':
-            mp3_to_upload.append(filepath)
-                  
-        else:
-            if not options.silent: print bright_red('reject'),\
-                                         filename,\
-                                         bright_red(ret)
-            clean_and_exit()
-        
-    # if the archive option is ~not~ used, the temp file will automatically
-    # delete itself when the script terminates
-    delete = not options.archive
-    tmpzip = tempfile.NamedTemporaryFile(delete=delete)
-    z = zipfile.ZipFile(tmpzip, 'w', zipfile.ZIP_STORED)
+    if options.meta:
+        set_tags(lists['mp3s'], 'comment', options.meta, append=True)
     
-    # add all mp3 files to the zip archive
-    
-    for f in mp3_to_upload:
-        tags = get_tags_dict(f)
-        album = clean(tags['album'])
-        artist = clean(tags['artist'])
-        preset = profile_name(tags['preset'])
-        date = clean(str(tags['date']))
-        
-        path_in_zip = "{artist} - ({date}) {album} [{preset}]"\
-        .format(album=album, artist=artist, date=date, preset=preset)
-        
-        track = tags.get('track', 0)
-        disc = tags.get('disc', "")
-        title = clean(tags.get('title', 'title'))
-        
-        track = "{track:02d}".format(track=int(track))
-        
-        if disc:
-            track = "{disc}{track}".format(disc=int(disc), track=track)
-        
-        file_on_zip = "{track} - {title}.mp3".format(title=title, track=track)
-            
-        s = os.path.join(path_in_zip, file_on_zip)
-        if not options.silent:
-            print bright_green("add:"), os.path.join(path_in_zip, file_on_zip)
-        z.write(f, s)
-            
-    # now go through all non-mp3 files and add them to the zip
-    
-    for f in os.listdir(tmp_other):
-        file_on_zip = os.path.basename(f)
-        s = os.path.join(path_in_zip, file_on_zip)
-        if not options.silent:
-            print bright_green("add:"), os.path.join(path_in_zip, file_on_zip)
-        z.write(f, s)
-    
-    if not options.silent: print "------------"
-    z.close()
-    
-    ################ check that this album hasnt already been uploaded
-    
-    if not options.archive:
-        result = check_dupe(artist, album, url)
-
-        if result == 'Yes':
-            print bright_red("This album has already been uploaded")
-            clean_and_exit()
-        elif result == 'No':
-            pass
-        else:
-            print bright_red("Error occured when checking for dupe")
-            clean_and_exit()
-    
-    ################ now do the upload
-    
-    if not options.skip_verify:
-        answer = raw_input("Does the above look all right? Y/n?")
-        if answer.upper() == 'N':
-            clean_and_exit()
-        
-    if mp3_to_upload and not options.archive:
-        data = dict(artist=artist, album=album, meta=options.meta,
-                    profile=preset, date=date, password=password)
-        send_request(tmpzip, data, url, options.silent)
-    elif options.archive:
-        if not options.silent: print "No upload, archive only"
+    # result = dict is it passes validation
+    result = validate_mp3s(lists['mp3s'])
+    if type(result) is not dict:
+        print bright_red("MP3 tags did not validate: %s" % result)
+        do_exit()
     else:
-        if not options.silent: print "nothing to upload, all files rejected"
-        clean_and_exit()
+        artist = result['artist']
+        album = result['album']
+        preset = result['preset']
+        date = result['date']
         
-    ############### cleanup
-
-    if options.archive:
-        #if the archive option is used, we have to manually delete the temp file
-        tmpzip.seek(0)
+    
+    
+    tmp = tempfile.NamedTemporaryFile()
+    zf = ZipFile(tmp, lists['mp3s'], lists['others'])
+    
+    if not options.silent:
+        zf.show_contents()
+        size = tmp.tell()
+        mb = size / 1048576.0
+        print "------\nArchive Size: {0} bytes ({1:.2f} MB)".format(size, mb)
+    
+    ###########
+    ###########
+    
+    if (not options.skip_verify and
+        not options.just_archive and
+        not options.silent):
+        answer = raw_input("Does the above look all right? [y]/n?")
+        if answer != '' and answer.upper() != 'Y':
+            print "--%s--" % answer
+            do_exit()
+        
+    if options.just_archive or options.leave_archive:
+        tmp.seek(0)
         f = open('archive.zip', 'w')
-        f.writelines(tmpzip.readlines())
-        os.remove(tmpzip.name)
+        f.writelines(tmp.readlines())
+        tmp.seek(0)
+        if options.just_archive:
+            do_exit()
+        
+    #####
+    
+    if not options.silent:
+        print "Checking if this album is a dupe...",
+        sys.stdout.flush()
 
-    clean_and_exit()
+    dupe, ver, reject = check_dupe(artist, album, options.url)
+    exit = False
+    
+    if reject is True:
+        print bright_red("Upload is rejected because your client is too old")
+        do_exit()
 
-
-
-
-
+    
+    if dupe is True:
+        print "Uh-oh"
+        print bright_red("Album already exists in The System. This is a dupe")
+        exit = True
+    
+    if dupe is False:
+        print "OK, not a dupe"
+        
+    if dupe is None:
+        print "Hrm"
+        print bright_red("Some error occured, Try again later")
+        exit = True
+    
+    if ver:
+        print "This is not the latest version of this sctipt, the latest vesion is:",
+        print bright_green(ver) 
+    
+    if exit:
+        do_exit()
+    
+    ##### send the file off to the server!
+    
+    data = dict(artist=artist, album=album, meta=options.meta,
+                profile=preset, date=date, password=options.password)
+    
+    if not options.silent: print size, "bytes being sent to server..."
+    
+    result = send_request(tmp, data, options.url)
+    
+    print result
+    
+    
+    
+    
+    
+    
+    
+    
+    

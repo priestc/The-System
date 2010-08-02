@@ -5,7 +5,8 @@ from cStringIO import StringIO
 import urllib
 import urllib2
 
-USER_AGENT = 'The Project Command Line Client v0.1'
+VERSION = 0.3
+USER_AGENT = 'The Project Command Line Client v%.1f' % VERSION
 
 class MultiPartForm(object):
     """Accumulate the data to be used when posting a form."""
@@ -70,7 +71,13 @@ class MultiPartForm(object):
         flattened.append('')
         return '\r\n'.join(flattened)
 
-def send_request(tmpzip, data, url, silent=False):
+def send_request(tmpzip, data, url):
+    """
+    Encodes all the data into a Http request where the album will be uploaded
+    it returns the response as a string. If there is a server error, it will
+    return the HTML of that error. If it's a success, the server returns
+    "#### bytes recieved from server"
+    """
     
     tmpzip.seek(0)
     
@@ -91,19 +98,48 @@ def send_request(tmpzip, data, url, silent=False):
     request.add_header('Content-length', len(body))
     request.add_data(body)
     
-    if not silent: print tmpzip.tell(), "bytes being sent to server..."
     try:
-        print urllib2.urlopen(request).read()
+        return urllib2.urlopen(request).read()
     except Exception, e:
-        print e.read()
+        return e.read()
 
 def check_dupe(artist, album, url):
+    """
+    Check that this album/artist combo does not already exist in the system.
+    It also checks to see if this client version is a valid version.
+    """
+    
+    ver = None
+    dupe = True
+    
     try:
+        request = urllib2.Request(url + "/album/check_dupe")
+        request.add_header('User-agent', USER_AGENT)
         data = urllib.urlencode(dict(album=album, artist=artist))
-        return urllib2.urlopen(url + "/album/check_dupe", data=data).read()
+        result = urllib2.urlopen(request, data=data).read()
     except:
-        return "Whoops"
+        result = ""
 
+    if result.startswith('Yes'):
+        dupe = True
+        l = 3
+    
+    elif result.startswith('No'):
+        dupe = False
+        l = 2
+    
+    elif result == "Too Old Client":
+        # the client is too old, who cares is it's a dupe
+        return (None, None, True)
+       
+    else:
+        # some error occured, who knows
+        return (None, None, None)
 
-
-
+    if len(result) > l:
+        # if the response is bigger than 3 or 2 letters, the 4th (or 3rd) 
+        # to the end will be the current latest version of the client script
+        # announce to the user that he/she may want to upgrade
+        ver = result[l+1:]
+        
+    return (dupe, ver, False)

@@ -17,7 +17,7 @@ def blue(text):
 
 def clean(value):
     """
-    Strip out characters that are not allowed in some filesystems
+    Strip out characters that are not allowed in files in some OS's
     """
 
     return re.sub(r'[*|\/:"<>?]', '', str(value)).encode('ascii','replace')

@@ -105,4 +105,10 @@ LOGIN_EXEMPT_URLS = (
     r'^upload$',
     r'^album/check_dupe$',
     r'^storage/set_bandwidth$',
-) 
+)
+
+# the current latest version of the client
+CURRENT_CLIENT_VERSION = 0.3 
+
+# the oldest version of the client that will still work
+MIN_CLIENT_VERSION = 0.2

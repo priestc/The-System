@@ -165,7 +165,7 @@ class FileList(object):
         return True
     
     def get_lists(self):
-        return {'mp3s': self.mp3s, 'other': self.other}
+        return {'mp3s': self.mp3s, 'others': self.other}
     
 def copy_to_temp(mp3s, other, tmp_dir):
     tmp_mp3 = os.path.join(tmp_dir, 'mp3')
@@ -173,14 +173,19 @@ def copy_to_temp(mp3s, other, tmp_dir):
     os.mkdir(tmp_mp3)
     os.mkdir(tmp_other)
     
+    new_mp3_list = []
     for path in mp3s:
         temp_path = os.path.join(tmp_mp3, os.path.basename(path))
-        shutil.copyfile(path, temp_path)
-        
-    for path in other:
-        temp_path = os.path.join(tmp_other, os.path.basename(path))
+        new_mp3_list.append(temp_path)
         shutil.copyfile(path, temp_path)
     
+    new_other_list = []
+    for path in other:
+        temp_path = os.path.join(tmp_other, os.path.basename(path))
+        new_other_list.append(temp_path)
+        shutil.copyfile(path, temp_path)
+    
+    return {'mp3s': new_mp3_list, 'others': new_other_list}
     
 def validate_mp3s(mp3s):
     """
