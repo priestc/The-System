@@ -82,7 +82,7 @@ def send_request(tmpzip, data, url, silent=False):
     mpform.add_field('password', data['password'])
     mpform.add_field('profile', data['profile'])
     mpform.add_file('file', 'album.zip', tmpzip)
-    
+
     body = str(mpform)
     
     request = urllib2.Request(url + "/upload")
@@ -98,8 +98,11 @@ def send_request(tmpzip, data, url, silent=False):
         print e.read()
 
 def check_dupe(artist, album, url):
-    data = urllib.urlencode(dict(album=album, artist=artist))
-    return urllib2.urlopen(url + "/album/check_dupe", data=data).read()
+    try:
+        data = urllib.urlencode(dict(album=album, artist=artist))
+        return urllib2.urlopen(url + "/album/check_dupe", data=data).read()
+    except:
+        return "Whoops"
 
 
 
