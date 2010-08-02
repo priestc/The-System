@@ -72,7 +72,6 @@ if __name__ == '__main__':
         not options.silent):
         answer = raw_input("Does the above look all right? [y]/n?")
         if answer != '' and answer.upper() != 'Y':
-            print "--%s--" % answer
             do_exit()
         
     if options.just_archive or options.leave_archive:
@@ -89,30 +88,35 @@ if __name__ == '__main__':
         print "Checking if this album is a dupe...",
         sys.stdout.flush()
 
-    dupe, ver, reject = check_dupe(artist, album, options.url)
+    dupe, client_reject, latest_client, password_match =\
+        pre_upload(artist, album, options.password, options.url)
     exit = False
     
-    if reject is True:
-        print bright_red("Upload is rejected because your client is too old")
-        do_exit()
-
+    if password_match is None:
+        print "Hrm"
+        print bright_red("Some error occured, Try again later. (Server down maybe?)")
+        exit = True
     
-    if dupe is True:
+    if password_match == "No":
+        print "Hrm"
+        print bright_red("Wrong Password")
+        do_exit()
+    
+    if client_reject == "Yes":
+        print "Hrm"
+        print bright_red("Upload will be rejected because your client is too old, please update")
+        do_exit()
+    
+    if dupe == "Yes":
         print "Uh-oh"
         print bright_red("Album already exists in The System. This is a dupe")
         exit = True
-    
-    if dupe is False:
+    else:
         print "OK, not a dupe"
         
-    if dupe is None:
-        print "Hrm"
-        print bright_red("Some error occured, Try again later")
-        exit = True
-    
-    if ver:
+    if latest_client != "Latest":
         print "This is not the latest version of this sctipt, the latest vesion is:",
-        print bright_green(ver) 
+        print bright_green(latest_client) 
     
     if exit:
         do_exit()

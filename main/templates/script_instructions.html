@@ -26,17 +26,17 @@
     </tr>
     
     <tr>
-        <td>--album="ALBUM'</td>
+        <td>--album="ALBUM"</td>
         <td>override the ID3/APE album tags with this value</td>
     </tr>
     
     <tr>
-        <td>--date="DATE'</td>
+        <td>--date="DATE"</td>
         <td>override the ID3/APE date tags with this value</td>
     </tr>
     
     <tr>
-        <td>--meta="META'</td>
+        <td>--meta="META"</td>
         <td>set meta information about this album (see next section)</td>
     </tr>
     
@@ -96,6 +96,11 @@ the albums will appear on the site, but they will appear to have no mirrors.
         <td>Complete rewrite. Added mechanism to nuke older versions of this
         client. Added <em>--leave-archive option</em>. Other small improvements.</td>
     </tr>
+    <tr>
+        <td>v0.4 (08-02-2010)</td>
+        <td>Changed the way the script checks dor dupes. Now passwords are also
+        verified before any data is sent</td>
+    </tr>
 </table>
 
 <h2>Upload requirements</h2>
@@ -150,6 +155,6 @@ the albums will appear on the site, but they will appear to have no mirrors.
     </li>
 </ul>
 
-<big><a href="{{ MEDIA_URL }}tsclient-0.3.zip">Downoad script here (v0.3) 08-02-2010</a><big>
+<big><a href="{{ MEDIA_URL }}tsclient-0.4.zip">Downoad script here (v0.4) 08-02-2010</a><big>
 
 {% endblock %}

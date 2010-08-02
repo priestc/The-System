@@ -103,12 +103,13 @@ from local_settings import *
 # urls exempt from being logged in; needed for LoginRequiredMiddleware
 LOGIN_EXEMPT_URLS = (
     r'^upload$',
-    r'^album/check_dupe$',
+    r'^pre_upload$',
     r'^storage/set_bandwidth$',
+    r'^album/check_dupe$',
 )
 
 # the current latest version of the client
-CURRENT_CLIENT_VERSION = 0.3 
+CURRENT_CLIENT_VERSION = 0.4 
 
 # the oldest version of the client that will still work
 MIN_CLIENT_VERSION = 0.2

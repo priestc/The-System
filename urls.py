@@ -13,7 +13,6 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     
     url(r'^$', 'main.views.home', name='root'),
-    url(r'^script.zip$', 'main.views.script_download', name="script_download"),
     url(r'^script$', 'main.views.script', name="script_instructions"),
         
     (r'^admin/', include(admin.site.urls)),
@@ -21,6 +20,7 @@ urlpatterns = patterns('',
     (r'^album/', include('album.urls')),
     
     (r'^upload$', 'storage.views.handle_upload'),
+    (r'^pre_upload$', 'main.views.pre_upload'),
     
     (
         r'^media/(?P<path>.*)$',

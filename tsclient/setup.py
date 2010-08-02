@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
       name='tsclient',
-      version='1.0',
+      version='0.4',
       description='The System uploader clent',
       scripts=['tsclient/tsup'],
       packages=['tsclient', 'poopagen', 'colorama'],

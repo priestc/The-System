@@ -10,7 +10,7 @@ from utils import *
 from multipart import MultiPartForm
 from tags import *
 
-VERSION = 0.3
+VERSION = 0.4
 USER_AGENT = 'The Project Command Line Client v%.1f' % VERSION
 
 class ImproperMP3Error(Exception): pass
@@ -254,43 +254,28 @@ def send_request(tmpzip, data, url):
     except Exception, e:
         return e.read()
 
-def check_dupe(artist, album, url):
+def pre_upload(artist, album, password, url):
     """
-    Check that this album/artist combo does not already exist in the system.
-    It also checks to see if this client version is a valid version.
+    1. Check that this album/artist combo does not already exist in the system.
+    2. Check to see if this client version is a valid version.
+    3. Gets the most current version of the client
+    4. Verifies that the password is correct
+    
     """
     
     ver = None
     dupe = True
-    request = urllib2.Request(url + "/album/check_dupe")
+    request = urllib2.Request(url + "/pre_upload")
     request.add_header('User-agent', USER_AGENT)
-    data = urllib.urlencode(dict(album=album, artist=artist))
+    data = urllib.urlencode(dict(album=album, artist=artist, password=password))
         
     try:
         result = urllib2.urlopen(request, data=data).read()
-    except Exception:
-        result = ""
+    except Exception, e:
+        print e
+        print e.read()
+        return [None,] * 4
 
-    if result.startswith('Yes'):
-        dupe = True
-        l = 3
-    
-    elif result.startswith('No'):
-        dupe = False
-        l = 2
-    
-    elif result == "Too Old Client":
-        # the client is too old, who cares is it's a dupe
-        return (None, None, True)
-       
-    else:
-        # some error occured, who knows
-        return (None, None, None)
+    return result.split(",")
 
-    if len(result) > l:
-        # if the response is bigger than 3 or 2 letters, the 4th (or 3rd) 
-        # to the end will be the current latest version of the client script
-        # announce to the user that he/she may want to upgrade
-        ver = result[l+1:]
         
-    return (dupe, ver, False)
