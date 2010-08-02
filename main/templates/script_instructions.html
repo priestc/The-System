@@ -51,8 +51,13 @@
     </tr>
     
     <tr>
-        <td>--archive-only</td>
+        <td>--leave-archive</td>
         <td>Add this option to get the resulting archive (no upload)</td>
+    </tr>
+    
+    <tr>
+        <td>--keep-archive</td>
+        <td>Add this option to get the resulting archive (still does upload)</td>
     </tr>
     
     <tr>
@@ -75,8 +80,23 @@ server, they get added to the S3 mirror queue. While they are in the queue,
 the albums will appear on the site, but they will appear to have no mirrors.
 
 <h2>Changelog</h2>
-v0.1 (07-29-2010) - initial release<br>
-v0.2 (07-31-2010) - added --date option, changed --verify to --skip-verify, fixed corruption bug
+
+<table>
+    <tr>
+        <td>v0.1 (07-29-2010)</td>
+        <td>initial release</td>
+    </tr>
+    <tr>
+        <td>v0.2 (07-31-2010)</td>
+        <td>added <em>--date</em> option, changed <em>--verify</em>
+        to <em>--skip-verify</em>, fixed corruption bug.</td>
+    </tr>
+    <tr>
+        <td>v0.3 (08-02-2010)</td>
+        <td>Complete rewrite. Added mechanism to nuke older versions of this
+        client. Added <em>--leave-archive option</em>. Other small improvements.</td>
+    </tr>
+</table>
 
 <h2>Upload requirements</h2>
 <ul>
@@ -130,6 +150,6 @@ v0.2 (07-31-2010) - added --date option, changed --verify to --skip-verify, fixe
     </li>
 </ul>
 
-<big><a href="{{ MEDIA_URL }}tsclient.zip">Downoad script here (v0.2) 07-30-2010</a><big>
+<big><a href="{{ MEDIA_URL }}tsclient-0.3.zip">Downoad script here (v0.3) 08-02-2010</a><big>
 
 {% endblock %}
