@@ -2,10 +2,16 @@ import os
 import shutil
 import tempfile
 import zipfile
+import urllib
+import urllib2
 
 import poopagen
 from utils import *
+from multipart import MultiPartForm
 from tags import *
+
+VERSION = 0.3
+USER_AGENT = 'The Project Command Line Client v%.1f' % VERSION
 
 class ImproperMP3Error(Exception): pass
 
@@ -216,6 +222,75 @@ def validate_mp3s(mp3s):
     return {'artist': clean(artist), 'album': clean(album),
             'preset': clean(preset), "date": clean(date)}
             
+def send_request(tmpzip, data, url):
+    """
+    Encodes all the data into a Http request where the album will be uploaded
+    it returns the response as a string. If there is a server error, it will
+    return the HTML of that error. If it's a success, the server returns
+    "#### bytes recieved from server"
+    """
     
+    tmpzip.seek(0)
     
+    mpform = MultiPartForm()
+    mpform.add_field('artist', data['artist'])
+    mpform.add_field('album', data['album'])
+    mpform.add_field('meta', data['meta'] or "")
+    mpform.add_field('date', data['date'])
+    mpform.add_field('password', data['password'])
+    mpform.add_field('profile', data['profile'])
+    mpform.add_file('file', 'album.zip', tmpzip)
 
+    body = str(mpform)
+    
+    request = urllib2.Request(url + "/upload")
+    request.add_header('User-agent', USER_AGENT)
+    request.add_header('Content-type', mpform.get_content_type())
+    request.add_header('Content-length', len(body))
+    request.add_data(body)
+    
+    try:
+        return urllib2.urlopen(request).read()
+    except Exception, e:
+        return e.read()
+
+def check_dupe(artist, album, url):
+    """
+    Check that this album/artist combo does not already exist in the system.
+    It also checks to see if this client version is a valid version.
+    """
+    
+    ver = None
+    dupe = True
+    request = urllib2.Request(url + "/album/check_dupe")
+    request.add_header('User-agent', USER_AGENT)
+    data = urllib.urlencode(dict(album=album, artist=artist))
+        
+    try:
+        result = urllib2.urlopen(request, data=data).read()
+    except Exception:
+        result = ""
+
+    if result.startswith('Yes'):
+        dupe = True
+        l = 3
+    
+    elif result.startswith('No'):
+        dupe = False
+        l = 2
+    
+    elif result == "Too Old Client":
+        # the client is too old, who cares is it's a dupe
+        return (None, None, True)
+       
+    else:
+        # some error occured, who knows
+        return (None, None, None)
+
+    if len(result) > l:
+        # if the response is bigger than 3 or 2 letters, the 4th (or 3rd) 
+        # to the end will be the current latest version of the client script
+        # announce to the user that he/she may want to upgrade
+        ver = result[l+1:]
+        
+    return (dupe, ver, False)

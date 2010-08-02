@@ -3,9 +3,8 @@ import sys
 import tempfile
 import shutil
 
-from tsclient.app import *
+from tsclient.core import *
 from tsclient.options import *
-from tsclient.http import *
 
 base_tmp = tempfile.mkdtemp()
 
@@ -123,17 +122,8 @@ if __name__ == '__main__':
     data = dict(artist=artist, album=album, meta=options.meta,
                 profile=preset, date=date, password=options.password)
     
-    if not options.silent: print size, "bytes being sent to server..."
+    if not options.silent: print size, "bytes being sent to server...(ctrl+z to stop)"
     
     result = send_request(tmp, data, options.url)
     
     print result
-    
-    
-    
-    
-    
-    
-    
-    
-    

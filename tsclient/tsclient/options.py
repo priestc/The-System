@@ -3,8 +3,9 @@ password = ''
 
 import os
 from optparse import OptionParser
+from tsclient.core import VERSION
 
-parser = OptionParser(usage="%prog [PATH] [options]", version="0.3")
+parser = OptionParser(usage="%prog [PATH] [options]", version=str(VERSION))
 
 parser.add_option('-p', "--password",
                   dest="password",

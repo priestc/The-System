@@ -131,7 +131,10 @@ class Tags(object):
                     return self.data[tag]
                 else:
                     return self.data[tag][0]
+            except NameError:
+                raise
             except: pass
+            
         return None
         
     def has_all_tags(self):
@@ -164,7 +167,6 @@ class MP3Tag(Tags):
         for tag in tag_list:
             try:
                 old = self.data[tag].text[0] #may raise KeyError
-                #import ipdb; ipdb.set_trace()
                 import_tag = tag.replace("::'eng'", '') # dirty hack
                 
                 #get proper ID3 tag class, TIT2, COMM, TPE, etc
