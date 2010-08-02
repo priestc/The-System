@@ -78,7 +78,7 @@ def handle_upload(request):
     if not request.POST.get('password', None) == settings.CLIENT_PASS:
         raise Http404
         
-    #upload_to_remote_storage.delay(album_obj.pk, destination.name)
+    upload_to_remote_storage.delay(album_obj.pk, destination.name)
     
     return HttpResponse('%s bytes recieved from client!!!' % f.size,
                         mimetype='text/plain')

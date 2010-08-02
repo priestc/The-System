@@ -4,7 +4,7 @@ password = ''
 import os
 from optparse import OptionParser
 
-parser = OptionParser(usage="%prog [PATH] [options]", version="0.2")
+parser = OptionParser(usage="%prog [PATH] [options]", version="0.3")
 
 parser.add_option('-p', "--password",
                   dest="password",
