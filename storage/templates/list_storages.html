@@ -13,9 +13,9 @@
     
     <div style="margin: 10px; padding: 10px; background: #f5f5f5; width: 550px; border: 1px solid gray">
     {% if not store.unlimited_storage %}
-        {% widthratio store.storage_left store.max_storage 100 %}% storage
+        {% widthratio store.current_storage store.max_storage 100 %}% storage
         <div style="overflow: hidden; background: #DDDDDD; width: 500px; margin: 10px">
-            <div style="float: left; width: {% widthratio store.storage_left store.max_storage 100 %}%; background: green">
+            <div style="float: left; width: {% widthratio store.current_storage store.max_storage 100 %}%; background: green">
             &nbsp;</div>
         </div>
     {% else %}
@@ -23,9 +23,9 @@
     {% endif %}
 
     {% if not store.unlimited_bandwidth %}
-        {% widthratio store.bandwidth_left store.max_bandwidth 100 %}% monthy bandwidth
+        {% widthratio store.current_bandwidth store.max_bandwidth 100 %}% monthy bandwidth
         <div style="overflow: hidden; background: #DDDDDD; width: 500px; margin: 10px">
-            <div style="float: left; width: {% widthratio store.bandwidth_left store.max_bandwidth 100 %}%; background: green">
+            <div style="float: left; width: {% widthratio store.current_bandwidth store.max_bandwidth 100 %}%; background: green">
             &nbsp;</div>
         </div>
     {% else %}
