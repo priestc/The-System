@@ -40,8 +40,6 @@ def mirror(album, storages, orig):
             # and it can handle the bandwidth, then sent it there!
             storage = storage.get_real_storage()
             copy_s3(orig, storage, album)
-            album.storages.add(storage)
-            album.save()
             return storage
 
 #############

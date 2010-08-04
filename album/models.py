@@ -48,7 +48,7 @@ class Album(models.Model):
     def get_absolute_url(self):
         return ('download_album', [str(self.pk)])
     
-    def get_a_bucket(self):
+    def get_random_bucket(self):
         """
         Returns a Bucket object where this album is stored. Only returns
         buckets that are not expired or about to be expired.
@@ -58,12 +58,14 @@ class Album(models.Model):
             if storage.can_handle(bandwidth=self.size):
                 return storage
     
-    def get_key_object(self):
+    def get_key_object(self, storage_name=None):
         
-        bucket = self.get_a_bucket().get_real_storage().get_bucket()
-        k = bucket.get_key(self.filename)
+        if storage_name:
+            bucket = self.storages.get(name=storage_name).get_real_storage().get_bucket()
+        else:
+            bucket = self.get_random_bucket().get_real_storage().get_bucket()
         
-        return k
+        return bucket.get_key(self.filename)
     
     def natural_key(self):
         return (self.artist, self.album, self.meta)

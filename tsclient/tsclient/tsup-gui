@@ -36,7 +36,7 @@ class UploadThread(threading.Thread):
         self.url = url
         self.tmp = tmp
         self.upload_size = tmp.tell()
-        threading.Thread.__init__(self)
+        super(UploadThread, self).__init__()
     
     def run(self):
         """
@@ -52,8 +52,8 @@ class UploadThread(threading.Thread):
         after = datetime.datetime.now()
         
         duration = after - before
-        duration = duration.seconds + (duration.microseconds / 100000.0)
-        kb = (self.upload_size/1024.0) / duration
+        secs = duration.seconds + (duration.microseconds / 100000.0)
+        kb = (self.upload_size/1024.0) / secs
         speed = "{0:.2f} KB/sec".format(kb)
         
         msg = "Finished upload of: %s - %s" % (artist, album) + \
@@ -67,7 +67,8 @@ class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title, size=(400, 450))
         
-        self.url = "http://localhost:8000"
+        self.url = "http://thesystem.chickenkiller.com"
+        self.CreateStatusBar()
         
         self.panel = wx.Panel(self, -1)
         text_size = (200, -1)
@@ -93,10 +94,10 @@ class MainFrame(wx.Frame):
                                     size=text_size)
         
         label_path = wx.StaticText(self.panel, -1, "Path to album:", pos=(10, 165))
-        self.path_wig = wx.TextCtrl(self.panel, -1, "/storage/Music/Amplifier/2005 - The Astronaut Dismantles HAL EP [LAME3.90 - VBR V2]", pos=(10, 180),
+        self.path_wig = wx.TextCtrl(self.panel, -1, "", pos=(10, 180),
                                     size=(300, -1))
         
-        label_pass = wx.StaticText(self.panel, -1, "Password: (required)", pos=(10, 210))
+        label_pass = wx.StaticText(self.panel, -1, "Password: (required)", pos=(10, 215))
         self.password_wig = wx.TextCtrl(self.panel, -1, "", pos=(10, 230),
                                     size=(300, -1))
                                     
@@ -106,10 +107,10 @@ class MainFrame(wx.Frame):
         #### buttons below
         
         self.browse = wx.Button(self.panel, wx.ID_FIND, size=(75, -1),
-                                    pos=(315, 180))
+                                    pos=(315, 179))
         
         self.upload = wx.Button(self.panel, -1, "Upload", size=(75, -1),
-                                    pos=(315, 230))
+                                    pos=(315, 229))
         #self.upload.Disable()                          
         
         self.Bind(wx.EVT_BUTTON, self.on_browse, self.browse)
@@ -134,8 +135,8 @@ class MainFrame(wx.Frame):
         """
         
         file_dialog = wx.FileDialog(self.panel, "Choose Directory to Upload")
-        file_dialog.ShowModal()
-        self.path_wig.SetValue(file_dialog.GetDirectory())
+        if file_dialog.ShowModal() == wx.ID_OK:
+            self.path_wig.SetValue(file_dialog.GetDirectory())
         
     def alert(self, parent, message, caption):
         dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.ICON_EXCLAMATION)
@@ -223,7 +224,11 @@ class MainFrame(wx.Frame):
         if verify_box.ShowModal():
             data = dict(artist=artist, album=album, meta=meta,
                         profile=preset, date=date, password=password)
-            msg = "Starting upload of: %s - %s" % (data['artist'], data['album'])
+                        
+            aa = (data['artist'], data['album'])
+            
+            msg = "Starting upload of: %s - %s" % aa
+            self.SetStatusText("Currently uploading %s - %s..." %aa )
             self.write_to_status(msg)
             
             # start the upload thread
@@ -238,6 +243,7 @@ class MainFrame(wx.Frame):
         shutil.rmtree(base_tmp)
 
     def finish_upload(self, event):
+        self.SetStatusText("")
         self.write_to_status(event.msg, "green")
         
 

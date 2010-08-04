@@ -6,14 +6,27 @@ def copy_s3(real_orig, real_dest, album):
     owned by a different user. real_* == S3Bucket model, not GenericStorage
     """
     
-    # get the key object for the original storage location
-    orig_key = real_orig.get_bucket().get_key(album.filename)
+    dest_user_id = real_dest.get_user_id()
+    
+    # get the key object from the original storage location
+    orig_key = album.get_key_object(real_orig.name)
+    
+    # get a copy of the original acl so we can restore it later
+    orig_key_policy = orig_key.get_acl()
     
     # allow the destination to get a copy of the key by adding the permission
-    orig_key.add_user_grant("READ", real_dest.get_user_id())
-
-    # copy the key into the new bucket
-    key.copy(real_dest.internal_name, album.filename)
+    orig_key.add_user_grant("READ", dest_user_id)
+    
+    # copy the key into the destination bucket
+    real_dest.get_bucket().copy_key(album.filename, real_orig.internal_name,
+                            album.filename)
+    
+    # restore the permission object
+    orig_key.set_acl(orig_key_policy)
+    
+    # make a record of the mirror on the database
+    album.storages.add(real_dest)
+    album.save()
     
     return True
 
