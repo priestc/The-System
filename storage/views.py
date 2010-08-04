@@ -71,11 +71,15 @@ def handle_upload(request):
         destination.write(chunk)
     destination.close()
     
-    if not request.META['HTTP_USER_AGENT']\
-                .startswith("The Project Command Line Client"):
+    ua = request.META['HTTP_USER_AGENT']
+    
+    if not ua.startswith("The Project Command Line Client") and \
+    not ua.startswith("The Project GUI Client"):
+        print ua
         raise Http404
     
     if not request.POST.get('password', None) == settings.CLIENT_PASS:
+        print request.POST.get('password', None)
         raise Http404
         
     upload_to_remote_storage.delay(album_obj.pk, destination.name)

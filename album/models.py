@@ -60,9 +60,8 @@ class Album(models.Model):
     
     def get_key_object(self):
         
-        bucket = self.get_a_bucket()
-        k = boto.s3.key.Key(bucket)
-        k.key = self.filename
+        bucket = self.get_a_bucket().get_real_storage().get_bucket()
+        k = bucket.get_key(self.filename)
         
         return k
     

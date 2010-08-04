@@ -1,0 +1,269 @@
+#!/usr/bin/env python
+import shutil
+import time
+import datetime
+import threading
+
+import wx
+from tsclient.core import *
+
+# Define notification event for thread completion
+EVT_UPLOAD_DONE_ID = wx.NewId()
+
+def EVT_UPLOAD_DONE(win, func):
+    """Define Result Event."""
+    win.Connect(-1, -1, EVT_UPLOAD_DONE_ID, func)
+
+class UploadDoneEvent(wx.PyEvent):
+    """Simple event to carry arbitrary result data."""
+    def __init__(self, msg):
+        """Init Result Event."""
+        wx.PyEvent.__init__(self)
+        self.msg = msg
+        self.SetEventType(EVT_UPLOAD_DONE_ID)
+        
+        
+class UploadThread(threading.Thread):
+    """
+    A thread that does all the uploading. This is done in a seperate thread
+    because otherwise it will make the UI unresponsive while the upload is
+    going.
+    """
+    
+    def __init__(self, frame, data, tmp, url):
+        self.frame = frame
+        self.data = data
+        self.url = url
+        self.tmp = tmp
+        self.upload_size = tmp.tell()
+        threading.Thread.__init__(self)
+    
+    def run(self):
+        """
+        Send the upload to the server, and return how long the upload took
+        and the average transfer speed.
+        """
+        
+        artist = self.data['artist']
+        album = self.data['album']
+        
+        before = datetime.datetime.now()
+        result = send_request(self.tmp, self.data, self.url, interface="GUI")
+        after = datetime.datetime.now()
+        
+        duration = after - before
+        duration = duration.seconds + (duration.microseconds / 100000.0)
+        kb = (self.upload_size/1024.0) / duration
+        speed = "{0:.2f} KB/sec".format(kb)
+        
+        msg = "Finished upload of: %s - %s" % (artist, album) + \
+              " -- Duration: %s, Avg Speed: %s" % (duration, speed)
+
+        wx.PostEvent(self.frame, UploadDoneEvent(msg))            
+    
+# Create a new frame class, derived from the wxPython Frame.
+class MainFrame(wx.Frame):
+
+    def __init__(self, parent, id, title):
+        wx.Frame.__init__(self, parent, id, title, size=(400, 450))
+        
+        self.url = "http://localhost:8000"
+        
+        self.panel = wx.Panel(self, -1)
+        text_size = (200, -1)
+        
+        
+        inst = wx.StaticText(self.panel, -1, "Leave blank to use value in tags", pos=(10, 15))
+        
+        
+        label_album = wx.StaticText(self.panel, -1, "Album:", pos=(10, 45))
+        self.album_wig = wx.TextCtrl(self.panel, -1, "", pos=(80, 40),
+                                     size=text_size)
+        
+        label_artist = wx.StaticText(self.panel, -1, "Artist:", pos=(10, 75))                             
+        self.artist_wig = wx.TextCtrl(self.panel, -1, "", pos=(80, 70),
+                                      size=text_size)
+        
+        label_date = wx.StaticText(self.panel, -1, "Date:", pos=(10, 105))                              
+        self.date_wig = wx.TextCtrl(self.panel, -1, "", pos=(80, 100),
+                                    size=text_size)
+        
+        label_meta = wx.StaticText(self.panel, -1, "Meta:", pos=(10, 135))                            
+        self.meta_wig = wx.TextCtrl(self.panel, -1, "", pos=(80, 130),
+                                    size=text_size)
+        
+        label_path = wx.StaticText(self.panel, -1, "Path to album:", pos=(10, 165))
+        self.path_wig = wx.TextCtrl(self.panel, -1, "/storage/Music/Amplifier/2005 - The Astronaut Dismantles HAL EP [LAME3.90 - VBR V2]", pos=(10, 180),
+                                    size=(300, -1))
+        
+        label_pass = wx.StaticText(self.panel, -1, "Password: (required)", pos=(10, 210))
+        self.password_wig = wx.TextCtrl(self.panel, -1, "", pos=(10, 230),
+                                    size=(300, -1))
+                                    
+        self.status_area = wx.TextCtrl(self.panel, -1, pos=(10, 270), size=(380,150),
+            style=wx.TE_MULTILINE|wx.BORDER_SUNKEN|wx.TE_READONLY|wx.TE_RICH2)
+        
+        #### buttons below
+        
+        self.browse = wx.Button(self.panel, wx.ID_FIND, size=(75, -1),
+                                    pos=(315, 180))
+        
+        self.upload = wx.Button(self.panel, -1, "Upload", size=(75, -1),
+                                    pos=(315, 230))
+        #self.upload.Disable()                          
+        
+        self.Bind(wx.EVT_BUTTON, self.on_browse, self.browse)
+        self.Bind(wx.EVT_BUTTON, self.verify_path, self.upload)
+        self.Bind(wx.EVT_KEY_UP, self.enable_upload, self.path_wig)
+        
+        self.bootleg = wx.CheckBox(self.panel, -1, "Bootleg", pos=(300, 100))
+        
+        # set up the handler for dealing with printing upload results to the
+        # status section
+        EVT_UPLOAD_DONE(self, self.finish_upload)
+        
+        self.Centre()
+        
+    def enable_upload(self, event):
+        self.upload.Enable()
+       
+    def on_browse(self, event):
+        """
+        When the 'find' button is clicked, launch the file browser and copy
+        that value into the path box
+        """
+        
+        file_dialog = wx.FileDialog(self.panel, "Choose Directory to Upload")
+        file_dialog.ShowModal()
+        self.path_wig.SetValue(file_dialog.GetDirectory())
+        
+    def alert(self, parent, message, caption):
+        dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.ICON_EXCLAMATION)
+        dlg.ShowModal()
+        dlg.Destroy()
+    
+    def write_to_status(self, message, color="black"):
+        start = len(self.status_area.GetValue())
+        self.status_area.AppendText(message + "\n")
+        fg = getattr(wx, color.upper())
+        at = wx.TextAttr(fg)
+        end = len(self.status_area.GetValue())
+        self.status_area.SetStyle(start, end, at)
+       
+    def verify_path(self, event):
+        """
+        Verify the path, and start the upload
+        """
+        
+        base_tmp = tempfile.mkdtemp()
+        path = self.path_wig.GetValue()
+        password = self.password_wig.GetValue()
+        bootleg = self.bootleg.GetValue()
+        
+        album = self.album_wig.GetValue()
+        artist = self.artist_wig.GetValue()
+        meta = self.meta_wig.GetValue()
+        date = self.date_wig.GetValue()
+        
+        self.write_to_status("verifying: " + path)
+        
+        try:
+            fl = FileList(path, bootleg)
+            lists = fl.get_temp_lists(base_tmp)
+        except ImproperMP3Error, e:
+            # show any show stopper errors, such as finding a file
+            # named *.mp3 but its not an mp3 or a mp3 with no tags
+            self.alert(self.panel, message=str(e), caption="Error")
+            self.write_to_status("failed:" + path, color="red")
+            self.finish(base_tmp)
+            return
+
+        if len(lists['mp3s']) == 0:
+            self.alert(self.panel, message="No MP3 files found at: " + path, caption="Error")
+            self.write_to_status("failed: " + path, color="red")
+            self.finish(base_tmp)
+            return
+            
+        if fl.warnings:
+            self.write_to_status("\n".join(fl.warnings), color="blue")
+        
+        if artist:
+            set_tags(lists['mp3s'], 'artist', artist)
+        if album:
+            set_tags(lists['mp3s'], 'album', album)
+        if date:
+            set_tags(lists['mp3s'], 'date', date)   
+        if meta:
+            set_tags(lists['mp3s'], 'comment', meta, append=True)
+            print "====adding meta to tags===="
+        
+        try:
+            result = validate_mp3s(lists['mp3s'])
+        except ImproperMP3Error, e:
+            self.write_to_status("MP3 tags did not validate: %s" % result, "red")
+            self.finish(base_tmp)
+        
+        artist = result['artist']
+        album = result['album']
+        preset = result['preset']
+        date = result['date']
+        
+        tmp = tempfile.NamedTemporaryFile()
+        zf = ZipFile(tmp, lists['mp3s'], lists['others'])
+        
+        filelist = zf.show_contents()
+        self.upload_size = tmp.tell()
+        message = "This is what the zip file will look like:\n\n" + filelist
+        message += "\n\nTotal size of archive: %.2f MB" % (self.upload_size / 1048576.0)
+        message += "\nDoes this look all right?"
+        
+        verify_box = wx.MessageDialog(self.panel,
+                                      message, "Verify Contents",
+                                      wx.YES_NO | wx.ICON_QUESTION)
+        if verify_box.ShowModal():
+            data = dict(artist=artist, album=album, meta=meta,
+                        profile=preset, date=date, password=password)
+            msg = "Starting upload of: %s - %s" % (data['artist'], data['album'])
+            self.write_to_status(msg)
+            
+            # start the upload thread
+            UploadThread(self, data, tmp, self.url).start()
+            
+        else:
+            self.write_to_status("Aborted", "red")
+        
+        self.finish(base_tmp)
+    
+    def finish(self, base_tmp):
+        shutil.rmtree(base_tmp)
+
+    def finish_upload(self, event):
+        self.write_to_status(event.msg, "green")
+        
+
+# Every wxWidgets application must have a class derived from wx.App
+class MyApp(wx.App):
+
+    # wxWindows calls this method to initialize the application
+    def OnInit(self):
+
+        # Create an instance of our customized Frame class
+        frame = MainFrame(None, -1, "The System Uploader")
+        frame.Show(True)
+
+        # Tell wxWindows that this is our main window
+        self.SetTopWindow(frame)
+
+        # Return a success flag
+        return True
+
+
+
+app = MyApp(0)     # Create an instance of the application class
+app.MainLoop()     # Tell it to start processing events
+
+
+
+
+
+

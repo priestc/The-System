@@ -1,25 +1,19 @@
 import boto
 
-def copy_s3(orig, dest, name):
+def copy_s3(real_orig, real_dest, album):
     """
     Copy a key from one S3 bucket to another when both buckets are
-    owned by a different user
+    owned by a different user. real_* == S3Bucket model, not GenericStorage
     """
     
-    print "copying s3 for reals"
-    print "sleeping to simulate upload..."
-    import time
-    time.sleep(60)
-    print "done!"
+    # get the key object for the original storage location
+    orig_key = real_orig.get_bucket().get_key(album.filename)
     
-    return
+    # allow the destination to get a copy of the key by adding the permission
+    orig_key.add_user_grant("READ", real_dest.get_user_id())
 
-    orig_user = orig.get_user_id()
-    dest_bucket = dest.get_bucket()
-    
-    # give user #1 permission to write to person #2's bucket
-    dest_bucket.add_user_grant(orig_user)
-
+    # copy the key into the new bucket
+    key.copy(real_dest.internal_name, album.filename)
     
     return True
 

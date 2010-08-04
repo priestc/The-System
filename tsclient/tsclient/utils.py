@@ -1,5 +1,6 @@
 import re
 from colorama import Fore, Back, Style
+from AsciiDammit import asciiDammit
 
 def bright_green(text):
     return "{color}{style}{text}{reset}"\
@@ -20,7 +21,8 @@ def clean(value):
     Strip out characters that are not allowed in files in some OS's
     """
 
-    return re.sub(r'[*|\/:"<>?]', '', str(value)).encode('ascii','replace')
+    value = asciiDammit(value.encode('iso-8859-1'))
+    return re.sub(r'[*|\/:"<>?]', '', value)
 
 def is_image(filepath):
     """

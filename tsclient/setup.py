@@ -6,6 +6,6 @@ setup(
       name='tsclient',
       version='0.4',
       description='The System uploader clent',
-      scripts=['tsclient/tsup'],
+      scripts=['tsclient/tsup', 'tsclient/tsup-gui'],
       packages=['tsclient', 'poopagen', 'colorama'],
      )

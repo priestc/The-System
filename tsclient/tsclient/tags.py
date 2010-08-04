@@ -88,13 +88,13 @@ class Tags(object):
     info = {}
     def __init__(self, data):
         self.data = data
-        self.info['title'] = self.find(self.title)
+        self.info['title'] = unicode(self.find(self.title))
         self.info['track'] = self.find(self.track)
-        self.info['artist'] = self.find(self.artist)
-        self.info['album'] = self.find(self.album)
-        self.info['date'] = self.find(self.date)
+        self.info['artist'] = unicode(self.find(self.artist))
+        self.info['album'] = unicode(self.find(self.album))
+        self.info['date'] = unicode(self.find(self.date))
         self.info['disc'] = self.find(self.disc)
-        self.info['preset'] = self.preset_name()
+        self.info['preset'] = unicode(self.preset_name())
         self.info['Vx'] = self.is_VX()
     
     def is_VX(self):

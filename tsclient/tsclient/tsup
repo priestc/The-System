@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+import datetime
 import sys
 import tempfile
 import shutil
@@ -16,7 +18,7 @@ if __name__ == '__main__':
     
     try:
         fl = FileList(options.path, options.bootleg)
-        lists = fl.get_lists()
+        lists = fl.get_temp_lists(base_tmp)
     except ImproperMP3Error, e:
         # show any show stopper errors, such as finding a file
         # named *.mp3 but its not an mp3
@@ -25,10 +27,7 @@ if __name__ == '__main__':
     
     if not options.silent and fl.warnings:
         # show things like skipped .m3u files and crap
-        print "\n".join(fl.warnings)
-    
-    # replace the list of paths with the list of temp paths   
-    lists = copy_to_temp(lists['mp3s'], lists['others'], base_tmp)
+        print blue("\n".join(fl.warnings))
     
     if options.artist:
         set_tags(lists['mp3s'], 'artist', options.artist)
@@ -42,24 +41,22 @@ if __name__ == '__main__':
     if options.meta:
         set_tags(lists['mp3s'], 'comment', options.meta, append=True)
     
-    # result = dict is it passes validation
-    result = validate_mp3s(lists['mp3s'])
-    if type(result) is not dict:
-        print bright_red("MP3 tags did not validate: %s" % result)
+    try:
+        result = validate_mp3s(lists['mp3s'])
+    except ImproperMP3Error, e:
+        print bright_red("MP3 tags did not validate: %s" % e)
         do_exit()
-    else:
-        artist = result['artist']
-        album = result['album']
-        preset = result['preset']
-        date = result['date']
         
-    
+    artist = result['artist']
+    album = result['album']
+    preset = result['preset']
+    date = result['date']
     
     tmp = tempfile.NamedTemporaryFile()
     zf = ZipFile(tmp, lists['mp3s'], lists['others'])
     
     if not options.silent:
-        zf.show_contents()
+        print zf.show_contents()
         size = tmp.tell()
         mb = size / 1048576.0
         print "------\nArchive Size: {0} bytes ({1:.2f} MB)".format(size, mb)
@@ -126,8 +123,18 @@ if __name__ == '__main__':
     data = dict(artist=artist, album=album, meta=options.meta,
                 profile=preset, date=date, password=options.password)
     
-    if not options.silent: print size, "bytes being sent to server...(ctrl+z to stop)"
+    if not options.silent:
+        print size, "bytes being sent to server...(ctrl+z to stop)"
     
-    result = send_request(tmp, data, options.url)
+    before = datetime.datetime.now()
+    result = send_request(tmp, data, options.url, interface="Command Line")
+    after = datetime.datetime.now()
     
     print result
+    
+    if not options.silent:
+        duration = after - before
+        speed = "{0:.2f} KB/sec".format((size / 1024.0) / duration.seconds)
+        print "Total Time:", duration, speed
+        
+    

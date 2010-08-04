@@ -5,13 +5,15 @@ import zipfile
 import urllib
 import urllib2
 
+from collections import defaultdict
+
 import poopagen
 from utils import *
 from multipart import MultiPartForm
 from tags import *
 
 VERSION = 0.4
-USER_AGENT = 'The Project Command Line Client v%.1f' % VERSION
+USER_AGENT = 'The Project {interface} Client v%.1f' % VERSION
 
 class ImproperMP3Error(Exception): pass
 
@@ -55,17 +57,24 @@ class ZipFile(object):
         """
         Prints out all the files in the archive
         """
-        
+        ret = []
         for info in self.get_zip().infolist():
-            print info.filename
+            ret.append(info.filename)
+        
+        return "\n".join(ret)
         
     def make_folder_name(self):
+        """
+        Construct the name of the file on the cip based on the file's tags
+        """
+        
         path = self.mp3_paths[0]
         tags = get_tags_dict(path)
+        
         album = clean(tags['album'])
         artist = clean(tags['artist'])
-        preset = tags['preset']
-        date = clean(str(tags['date']))
+        preset = clean(tags['preset'])
+        date = clean(tags['date'])
         
         return "{artist} - ({date}) {album} [{preset}]"\
         .format(album=album, artist=artist, date=date, preset=preset)
@@ -125,7 +134,7 @@ class FileList(object):
                         self.other.append(path)
                     
                 else:
-                    msg = blue("IGNORING (%s): %s" % (move, path))
+                    msg = "IGNORING (%s): %s" % (move, path)
                     self.warnings.append(msg)
     
     def move_acceptable(self, path):
@@ -170,29 +179,40 @@ class FileList(object):
         
         return True
     
-    def get_lists(self):
-        return {'mp3s': self.mp3s, 'others': self.other}
+    def get_temp_lists(self, tmp_dir):
+        return self.copy_to_temp(self.mp3s, self.other, tmp_dir)
     
-def copy_to_temp(mp3s, other, tmp_dir):
-    tmp_mp3 = os.path.join(tmp_dir, 'mp3')
-    tmp_other = os.path.join(tmp_dir, 'other')
-    os.mkdir(tmp_mp3)
-    os.mkdir(tmp_other)
+    def copy_to_temp(self, mp3s, other, tmp_dir):
+        tmp_mp3 = os.path.join(tmp_dir, 'mp3')
+        tmp_other = os.path.join(tmp_dir, 'other')
+        os.mkdir(tmp_mp3)
+        os.mkdir(tmp_other)
+        
+        new_mp3_list = []
+        for path in mp3s:
+            temp_path = os.path.join(tmp_mp3, os.path.basename(path))
+            new_mp3_list.append(temp_path)
+            shutil.copyfile(path, temp_path)
+        
+        new_other_list = []
+        for path in other:
+            temp_path = os.path.join(tmp_other, os.path.basename(path))
+            new_other_list.append(temp_path)
+            shutil.copyfile(path, temp_path)
+        
+        return {'mp3s': new_mp3_list, 'others': new_other_list}
+
+def is_sequencial(l):
+    """
+    Is the list sequencial? Takes a list of ints.
+    """
     
-    new_mp3_list = []
-    for path in mp3s:
-        temp_path = os.path.join(tmp_mp3, os.path.basename(path))
-        new_mp3_list.append(temp_path)
-        shutil.copyfile(path, temp_path)
+    for i,t in enumerate(l):
+        i = i+1 ## enumerate starts at zero, tracknumbers should start at one
+        if not t == i: return False
     
-    new_other_list = []
-    for path in other:
-        temp_path = os.path.join(tmp_other, os.path.basename(path))
-        new_other_list.append(temp_path)
-        shutil.copyfile(path, temp_path)
-    
-    return {'mp3s': new_mp3_list, 'others': new_other_list}
-    
+    return True
+   
 def validate_mp3s(mp3s):
     """
     Make sure ~all~ mp3's have the exact same value for date, album and artist
@@ -206,23 +226,26 @@ def validate_mp3s(mp3s):
     date = tags['date']
     preset = tags['preset']
     
-    tracks = []
+    discs = defaultdict(list)
     for path in mp3s:
         tags = get_tags_dict(path)
+        disc = tags.get('disc', 1)
+        tracks = discs[disc]
         tracks.append(tags['track'])
-        if not artist == tags['artist']: return "ARTIST"
-        if not album == tags['album']: return "ALBUM"
-        if not date == tags['date']: return "DATE"
-        if not preset == tags['preset']: return "ENCODING"
+        if not artist == tags['artist']: raise ImproperMP3Error("ARTIST")
+        if not album == tags['album']: raise ImproperMP3Error("ALBUM")
+        if not date == tags['date']: raise ImproperMP3Error("DATE")
+        if not preset == tags['preset']: raise ImproperMP3Error("ENCODING")
     
-    for i,t in enumerate(sorted(int(t) for t in tracks)):
-        i = i+1 ## enumerate starts at zero, tracknumbers should start at one
-        if not t == i: return "NON SEQUENCIAL TRACKS"
+    for (disc, items) in discs.items():
+        tracks = sorted(int(t) for t in tracks)
+        if not is_sequencial(tracks):
+            raise ImproperMP3Error("NON SEQUENCIAL TRACKS")
                 
     return {'artist': clean(artist), 'album': clean(album),
             'preset': clean(preset), "date": clean(date)}
             
-def send_request(tmpzip, data, url):
+def send_request(tmpzip, data, url, interface="Command Line"):
     """
     Encodes all the data into a Http request where the album will be uploaded
     it returns the response as a string. If there is a server error, it will
@@ -233,18 +256,20 @@ def send_request(tmpzip, data, url):
     tmpzip.seek(0)
     
     mpform = MultiPartForm()
-    mpform.add_field('artist', data['artist'])
-    mpform.add_field('album', data['album'])
-    mpform.add_field('meta', data['meta'] or "")
-    mpform.add_field('date', data['date'])
-    mpform.add_field('password', data['password'])
-    mpform.add_field('profile', data['profile'])
+    mpform.add_field('artist', str(data['artist']))
+    mpform.add_field('album', str(data['album']))
+    mpform.add_field('meta', str(data['meta'] or ""))
+    mpform.add_field('date', str(data['date']))
+    mpform.add_field('password', str(data['password']))
+    mpform.add_field('profile', str(data['profile']))
     mpform.add_file('file', 'album.zip', tmpzip)
 
     body = str(mpform)
     
     request = urllib2.Request(url + "/upload")
-    request.add_header('User-agent', USER_AGENT)
+    
+    ua = USER_AGENT.format(interface=interface)
+    request.add_header('User-agent', ua)
     request.add_header('Content-type', mpform.get_content_type())
     request.add_header('Content-length', len(body))
     request.add_data(body)
@@ -254,19 +279,21 @@ def send_request(tmpzip, data, url):
     except Exception, e:
         return e.read()
 
-def pre_upload(artist, album, password, url):
+def pre_upload(artist, album, password, url, interface="Command Line"):
     """
     1. Check that this album/artist combo does not already exist in the system.
     2. Check to see if this client version is a valid version.
     3. Gets the most current version of the client
     4. Verifies that the password is correct
-    
     """
     
     ver = None
     dupe = True
     request = urllib2.Request(url + "/pre_upload")
-    request.add_header('User-agent', USER_AGENT)
+    
+    # add the "Command Line" or "GUI" part to the user agent string
+    ua = USER_AGENT.format(interface=interface)
+    request.add_header('User-agent', ua)
     data = urllib.urlencode(dict(album=album, artist=artist, password=password))
         
     try:

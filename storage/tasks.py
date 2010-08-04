@@ -12,7 +12,8 @@ def upload(album, filepath, storages):
     """
     Find the first storage than can accept the file, and send it there.Each
     storage object is guaranteed to not already have the file since it is a
-    generator object created outside of this function.
+    generator object created outside of this function. Returns a real storage
+    object
     """
     
     for storage in storages:
