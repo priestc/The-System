@@ -12,7 +12,7 @@ from utils import *
 from multipart import MultiPartForm
 from tags import *
 
-VERSION = 0.4
+VERSION = 0.5
 USER_AGENT = 'The Project {interface} Client v%.1f' % VERSION
 
 class ImproperMP3Error(Exception): pass
@@ -220,6 +220,9 @@ def validate_mp3s(mp3s):
     artist, and album if it passed
     """
     
+    if len(mp3s) == 0:
+        raise ImproperMP3Error("NO FILES")
+    
     tags = get_tags_dict(mp3s[0])
     album = tags['album']
     artist = tags['artist']
@@ -279,30 +282,116 @@ def send_request(tmpzip, data, url, interface="Command Line"):
     except Exception, e:
         return e.read()
 
-def pre_upload(artist, album, password, url, interface="Command Line"):
-    """
-    1. Check that this album/artist combo does not already exist in the system.
-    2. Check to see if this client version is a valid version.
-    3. Gets the most current version of the client
-    4. Verifies that the password is correct
-    """
+class VerifyClient(object):
     
-    ver = None
-    dupe = True
-    request = urllib2.Request(url + "/pre_upload")
+    def __init__(self, password, url, artist=None,
+                        album=None, interface="Command Line"):
+        
+        self.artist = artist
+        self.album = album
+        self.url = url + "/pre_upload"
+        self.password = password
+        self.ua = USER_AGENT.format(interface=interface)
+        
+        self.dupe = False
+        self.client_reject = False
+        self.latest_client = None
+        self.password_match = False
+        
+        self.made_request = False
+        
+    def make_request(self):
+        """
+        Makes the request to the server to get all the information to verify
+        the information
+        """
+        
+        request = urllib2.Request(self.url)
+        request.add_header('User-agent', self.ua)
+        data = urllib.urlencode(dict(album=self.album, 
+                                     artist=self.artist,
+                                     password=self.password))
+            
+        #try:
+        self.result = urllib2.urlopen(request, data=data).read()
+        #except Exception, error:
+            #return error.read()
+
+        (self.dupe, self.min_client, self.latest_client,
+                self.password_match) = self.result.split(',')
+        
+        self.min_client = float(self.min_client)
+        self.latest_client = float(self.latest_client)
+        self.made_request = True
     
-    # add the "Command Line" or "GUI" part to the user agent string
-    ua = USER_AGENT.format(interface=interface)
-    request.add_header('User-agent', ua)
-    data = urllib.urlencode(dict(album=album, artist=artist, password=password))
+    def is_dupe(self):
+        if not self.made_request: self.make_request()
         
-    try:
-        result = urllib2.urlopen(request, data=data).read()
-    except Exception, e:
-        print e
-        print e.read()
-        return [None,] * 4
+        if self.dupe == "Yes":
+            return True
+        
+        if self.dupe == "No":
+            return False
+        
+    def is_password_match(self):
+        if not self.made_request: self.make_request()
+        
+        if self.password_match == "Yes":
+            return True
+        
+        if self.password_match == "No":
+            return False
+        
+    def is_allowed_client(self):
+        if not self.made_request: self.make_request()
+        return VERSION >= self.min_client
+    
+    def is_latest_client(self):
+        if not self.made_request: self.make_request()
+        
+        return float(self.latest_client) == VERSION
 
-    return result.split(",")
+
+    def get_latest_client_version(self):
+        if not self.made_request: self.make_request()
+        
+        return self.latest_client
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         
+    
+        
+    

@@ -33,16 +33,10 @@ def pre_upload(request):
     dupe = Album.objects.filter(album__iexact=album, artist__iexact=artist).exists()
     dupe = "Yes" if dupe else "No"
     
-    # determine if the client version is too old to accept
-    client_ver = float(request.META['HTTP_USER_AGENT'].split(' v')[1])
-    client_reject = (client_ver <= settings.MIN_CLIENT_VERSION)
-    client_reject = "Yes" if client_reject else "No"
-    
-    # get the latest version of the client, if the latest version is
-    # the version the user is using, return "Latest"
-    latest_client = settings.CURRENT_CLIENT_VERSION
-    is_latest_client = (client_ver == latest_client)
-    latest_client = "Latest" if is_latest_client else str(latest_client)
+    # get the latest version of the client
+    # also get the minversion that will be allowed by the system
+    latest_client = str(settings.CURRENT_CLIENT_VERSION)
+    min_client = str(settings.MIN_CLIENT_VERSION)
     
     # determine if the password is correct
     user_password = request.POST['password']
@@ -51,5 +45,5 @@ def pre_upload(request):
     
     #######################
     
-    st = "{dupe},{client_reject},{latest_client},{password_match}".format(**locals())
+    st = "{dupe},{min_client},{latest_client},{password_match}".format(**locals())
     return HttpResponse(st, mimetype="text/plain")

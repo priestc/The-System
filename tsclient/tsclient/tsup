@@ -78,46 +78,54 @@ if __name__ == '__main__':
         tmp.seek(0)
         if options.just_archive:
             do_exit()
+    
+    #####
         
+    vf = VerifyClient(artist=artist, album=album, password=options.password,
+                      url=options.url, interface="Command Line")
+                            
+    #####
+    
+    if not options.silent:
+        print "Checking if password is correct...",
+    
+    if vf.is_password_match() is False:
+        print "Hrm"
+        print bright_red("Wrong Password")
+        do_exit()
+    else:
+        print "OK"
+        
+    #####
+    
+    if not options.silent:
+        print "Checking if client version is acceptable...",
+        
+    if not vf.is_allowed_client():
+        print "Hrm"
+        print bright_red("Upload is rejected because your client is too old, please update")
+        print bright_red("Your version: v%s, latest version: v%s" % (VERSION, vf.get_latest_client_version()))
+        do_exit()
+    else:
+        print "OK"
+    
+    if not vf.is_latest_client():
+        print "This is not the latest version of this sctipt, the latest vesion is:",
+        print bright_green(vf.get_latest_client_version())
+                            
     #####
     
     if not options.silent:
         print "Checking if this album is a dupe...",
         sys.stdout.flush()
-
-    dupe, client_reject, latest_client, password_match =\
-        pre_upload(artist, album, options.password, options.url)
-    exit = False
     
-    if password_match is None:
-        print "Hrm"
-        print bright_red("Some error occured, Try again later. (Server down maybe?)")
-        exit = True
-    
-    if password_match == "No":
-        print "Hrm"
-        print bright_red("Wrong Password")
-        do_exit()
-    
-    if client_reject == "Yes":
-        print "Hrm"
-        print bright_red("Upload will be rejected because your client is too old, please update")
-        do_exit()
-    
-    if dupe == "Yes":
+    if vf.is_dupe() is True:
         print "Uh-oh"
         print bright_red("Album already exists in The System. This is a dupe")
-        exit = True
+        do_exit()
     else:
         print "OK, not a dupe"
         
-    if latest_client != "Latest":
-        print "This is not the latest version of this sctipt, the latest vesion is:",
-        print bright_green(latest_client) 
-    
-    if exit:
-        do_exit()
-    
     ##### send the file off to the server!
     
     data = dict(artist=artist, album=album, meta=options.meta,

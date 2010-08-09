@@ -109,7 +109,7 @@ LOGIN_EXEMPT_URLS = (
 )
 
 # the current latest version of the client
-CURRENT_CLIENT_VERSION = 0.4 
+CURRENT_CLIENT_VERSION = 0.5
 
 # the oldest version of the client that will still work
-MIN_CLIENT_VERSION = 0.2
+MIN_CLIENT_VERSION = 0.5
