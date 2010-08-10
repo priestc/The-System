@@ -212,7 +212,22 @@ def is_sequencial(l):
         if not t == i: return False
     
     return True
-   
+
+def overwrite_tags(mp3s, artist, album, date, meta):
+    """
+    given a list of mp3s, change the tags if and only if the value is not None.
+    """
+    
+    if artist:
+        set_tags(mp3s, 'artist', artist)
+    if album:
+        set_tags(mp3s, 'album', album)
+    if date:
+        set_tags(mp3s, 'date', date)   
+    if meta:
+        set_tags(mp3s, 'comment', meta, append=True)
+    
+    
 def validate_mp3s(mp3s):
     """
     Make sure ~all~ mp3's have the exact same value for date, album and artist
@@ -283,6 +298,14 @@ def send_request(tmpzip, data, url, interface="Command Line"):
         return e.read()
 
 class VerifyClient(object):
+    """
+    a class that handles verification of the upload before the actual upload
+    happens. It...
+    1. makes sure the client is the latest version,
+    2. makes sure the password is correct
+    3. makes sure the client is not such an old version
+    4. makes sure the album+artist has not already been uploaded
+    """
     
     def __init__(self, password, url, artist=None,
                         album=None, interface="Command Line"):
@@ -316,13 +339,18 @@ class VerifyClient(object):
         self.result = urllib2.urlopen(request, data=data).read()
         #except Exception, error:
             #return error.read()
-
-        (self.dupe, self.min_client, self.latest_client,
+        
+        self.made_request = True
+        
+        try:
+            (self.dupe, self.min_client, self.latest_client,
                 self.password_match) = self.result.split(',')
+        except ValueError:
+            raise RuntimeError('Invalid Response')
         
         self.min_client = float(self.min_client)
         self.latest_client = float(self.latest_client)
-        self.made_request = True
+        
     
     def is_dupe(self):
         if not self.made_request: self.make_request()
@@ -343,18 +371,24 @@ class VerifyClient(object):
             return False
         
     def is_allowed_client(self):
+        """
+        is the client version greater than the minimum client version
+        supplied by the server?
+        """
+        
         if not self.made_request: self.make_request()
         return VERSION >= self.min_client
     
     def is_latest_client(self):
-        if not self.made_request: self.make_request()
+        """
+        Is there a greater version of the client available?
+        """
         
-        return float(self.latest_client) == VERSION
-
+        if not self.made_request: self.make_request()
+        return VERSION >= float(self.latest_client)
 
     def get_latest_client_version(self):
         if not self.made_request: self.make_request()
-        
         return self.latest_client
 
 

@@ -29,17 +29,9 @@ if __name__ == '__main__':
         # show things like skipped .m3u files and crap
         print blue("\n".join(fl.warnings))
     
-    if options.artist:
-        set_tags(lists['mp3s'], 'artist', options.artist)
-        
-    if options.album:
-        set_tags(lists['mp3s'], 'album', options.album)
-        
-    if options.date:
-        set_tags(lists['mp3s'], 'date', options.date)
-            
-    if options.meta:
-        set_tags(lists['mp3s'], 'comment', options.meta, append=True)
+    # write the new tags onto the copies of the mp3s in the temp directory
+    overwrite_tags(lists['mp3s'], options.artist,
+                    options.album, options.date, options.meta)
     
     try:
         result = validate_mp3s(lists['mp3s'])
@@ -83,12 +75,19 @@ if __name__ == '__main__':
         
     vf = VerifyClient(artist=artist, album=album, password=options.password,
                       url=options.url, interface="Command Line")
-                            
+    
+    if not options.silent:
+        print "------"
+        print "Verifying upload...",
+        vf.make_request()
+        print "OK"
+                          
     #####
     
     if not options.silent:
-        print "Checking if password is correct...",
-    
+        print "    Checking if password is correct...",
+        sys.stdout.flush()
+        
     if vf.is_password_match() is False:
         print "Hrm"
         print bright_red("Wrong Password")
@@ -99,7 +98,7 @@ if __name__ == '__main__':
     #####
     
     if not options.silent:
-        print "Checking if client version is acceptable...",
+        print "    Checking if client version is acceptable...",
         
     if not vf.is_allowed_client():
         print "Hrm"
@@ -116,8 +115,8 @@ if __name__ == '__main__':
     #####
     
     if not options.silent:
-        print "Checking if this album is a dupe...",
-        sys.stdout.flush()
+        print "    Checking if this album is a dupe...",
+        
     
     if vf.is_dupe() is True:
         print "Uh-oh"
@@ -132,6 +131,7 @@ if __name__ == '__main__':
                 profile=preset, date=date, password=options.password)
     
     if not options.silent:
+        print "------"
         print size, "bytes being sent to server...(ctrl+z to stop)"
     
     before = datetime.datetime.now()
@@ -142,7 +142,8 @@ if __name__ == '__main__':
     
     if not options.silent:
         duration = after - before
-        speed = "{0:.2f} KB/sec".format((size / 1024.0) / duration.seconds)
+        secs = duration.seconds + (duration.microseconds / 100000.0)
+        speed = "{0:.2f} KB/sec".format((size / 1024.0) / secs)
         print "Total Time:", duration, speed
         
     

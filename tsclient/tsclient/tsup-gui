@@ -6,61 +6,8 @@ import threading
 
 import wx
 from tsclient.core import *
+from tsclient.gui_threads import *
 
-# Define notification event for thread completion
-EVT_UPLOAD_DONE_ID = wx.NewId()
-
-def EVT_UPLOAD_DONE(win, func):
-    """Define Result Event."""
-    win.Connect(-1, -1, EVT_UPLOAD_DONE_ID, func)
-
-class UploadDoneEvent(wx.PyEvent):
-    """Simple event to carry arbitrary result data."""
-    def __init__(self, msg):
-        """Init Result Event."""
-        wx.PyEvent.__init__(self)
-        self.msg = msg
-        self.SetEventType(EVT_UPLOAD_DONE_ID)
-        
-        
-class UploadThread(threading.Thread):
-    """
-    A thread that does all the uploading. This is done in a seperate thread
-    because otherwise it will make the UI unresponsive while the upload is
-    going.
-    """
-    
-    def __init__(self, frame, data, tmp, url):
-        self.frame = frame
-        self.data = data
-        self.url = url
-        self.tmp = tmp
-        self.upload_size = tmp.tell()
-        super(UploadThread, self).__init__()
-    
-    def run(self):
-        """
-        Send the upload to the server, and return how long the upload took
-        and the average transfer speed.
-        """
-        
-        artist = self.data['artist']
-        album = self.data['album']
-        
-        before = datetime.datetime.now()
-        result = send_request(self.tmp, self.data, self.url, interface="GUI")
-        after = datetime.datetime.now()
-        
-        duration = after - before
-        secs = duration.seconds + (duration.microseconds / 100000.0)
-        kb = (self.upload_size/1024.0) / secs
-        speed = "{0:.2f} KB/sec".format(kb)
-        
-        msg = "Finished upload of: %s - %s" % (artist, album) + \
-              " -- Duration: %s, Avg Speed: %s" % (duration, speed)
-
-        wx.PostEvent(self.frame, UploadDoneEvent(msg))            
-    
 # Create a new frame class, derived from the wxPython Frame.
 class MainFrame(wx.Frame):
 
@@ -73,9 +20,7 @@ class MainFrame(wx.Frame):
         self.panel = wx.Panel(self, -1)
         text_size = (200, -1)
         
-        
         inst = wx.StaticText(self.panel, -1, "Leave blank to use value in tags", pos=(10, 15))
-        
         
         label_album = wx.StaticText(self.panel, -1, "Album:", pos=(10, 45))
         self.album_wig = wx.TextCtrl(self.panel, -1, "", pos=(80, 40),
@@ -121,7 +66,8 @@ class MainFrame(wx.Frame):
         
         # set up the handler for dealing with printing upload results to the
         # status section
-        EVT_UPLOAD_DONE(self, self.finish_upload)
+        EVT_UPLOAD_DONE(self, self.upload_done)
+        EVT_STATUS(self, self.message_event)
         
         self.Centre()
         
@@ -187,16 +133,8 @@ class MainFrame(wx.Frame):
             
         if fl.warnings:
             self.write_to_status("\n".join(fl.warnings), color="blue")
-        
-        if artist:
-            set_tags(lists['mp3s'], 'artist', artist)
-        if album:
-            set_tags(lists['mp3s'], 'album', album)
-        if date:
-            set_tags(lists['mp3s'], 'date', date)   
-        if meta:
-            set_tags(lists['mp3s'], 'comment', meta, append=True)
-            print "====adding meta to tags===="
+            
+        overwrite_tags(lists['mp3s'], artist, album, date, meta)
         
         try:
             result = validate_mp3s(lists['mp3s'])
@@ -221,6 +159,7 @@ class MainFrame(wx.Frame):
         verify_box = wx.MessageDialog(self.panel,
                                       message, "Verify Contents",
                                       wx.YES_NO | wx.ICON_QUESTION)
+
         if verify_box.ShowModal():
             data = dict(artist=artist, album=album, meta=meta,
                         profile=preset, date=date, password=password)
@@ -240,12 +179,28 @@ class MainFrame(wx.Frame):
         self.finish(base_tmp)
     
     def finish(self, base_tmp):
+        """
+        After the upload is finished or the upload is rejected, remove all the
+        temp files created
+        """
+        
         shutil.rmtree(base_tmp)
 
-    def finish_upload(self, event):
-        self.SetStatusText("")
-        self.write_to_status(event.msg, "green")
+    def upload_done(self, event):
+        """
+        Capture the event that gets launched from the seperate upload thread
+        and put the text onto the status window
+        """
         
+        self.SetStatusText("")
+        self.write_to_status(event.msg, event.color)
+    
+    def message_event(self, event):
+        """
+        Used for threads to write messages to the status area
+        """
+        
+        self.write_to_status(event.msg, event.color)
 
 # Every wxWidgets application must have a class derived from wx.App
 class MyApp(wx.App):
