@@ -8,6 +8,6 @@ setup(
       version=str(VERSION),
       description='The System uploader clent',
       scripts=['tsclient/tsup', 'tsclient/tsup-gui'],
-      #install_requires=['wxpython', 'colorama'],
-      packages=['tsclient', 'poopagen', 'colorama'],
+      install_requires=['wxpython', 'colorama'],
+      packages=['tsclient', 'poopagen'],
      )
