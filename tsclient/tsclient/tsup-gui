@@ -160,7 +160,7 @@ class MainFrame(wx.Frame):
                                       message, "Verify Contents",
                                       wx.YES_NO | wx.ICON_QUESTION)
 
-        if verify_box.ShowModal():
+        if verify_box.ShowModal() == wx.OK:
             data = dict(artist=artist, album=album, meta=meta,
                         profile=preset, date=date, password=password)
                         
