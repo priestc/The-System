@@ -160,7 +160,7 @@ class MainFrame(wx.Frame):
                                       message, "Verify Contents",
                                       wx.YES_NO | wx.ICON_QUESTION)
 
-        if verify_box.ShowModal() == wx.ID_OK:
+        if verify_box.ShowModal() == wx.ID_YES:
             data = dict(artist=artist, album=album, meta=meta,
                         profile=preset, date=date, password=password)
                         
@@ -174,6 +174,7 @@ class MainFrame(wx.Frame):
             UploadThread(self, data, tmp, self.url).start()
             
         else:
+            print "abort"
             self.write_to_status("Aborted", "red")
         
         self.finish(base_tmp)
