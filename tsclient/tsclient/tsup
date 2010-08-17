@@ -52,6 +52,9 @@ if __name__ == '__main__':
         size = tmp.tell()
         mb = size / 1048576.0
         print "------\nArchive Size: {0} bytes ({1:.2f} MB)".format(size, mb)
+    else:
+        # actually make the zip since we're not calling .show_contents()
+        zf.get_zip()
     
     ###########
     ###########
@@ -79,14 +82,17 @@ if __name__ == '__main__':
     if not options.silent:
         print "------"
         print "Verifying upload...",
-        vf.make_request()
+        sys.stdout.flush()
+        
+    vf.make_request()
+    
+    if not options.silent:
         print "OK"
                           
     #####
     
     if not options.silent:
         print "    Checking if password is correct...",
-        sys.stdout.flush()
         
     if vf.is_password_match() is False:
         print "Hrm"
@@ -116,7 +122,6 @@ if __name__ == '__main__':
     
     if not options.silent:
         print "    Checking if this album is a dupe...",
-        
     
     if vf.is_dupe() is True:
         print "Uh-oh"

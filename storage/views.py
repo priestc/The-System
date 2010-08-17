@@ -1,4 +1,5 @@
 import os
+import zipfile
 
 from django.http import HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
@@ -70,6 +71,10 @@ def handle_upload(request):
     for chunk in f.chunks():
         destination.write(chunk)
     destination.close()
+    
+    if not zipfile.is_zipfile(save_location):
+        album_obj.delete()
+        raise RuntimeError('Not valid zip file')
     
     ua = request.META['HTTP_USER_AGENT']
     
