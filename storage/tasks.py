@@ -3,6 +3,7 @@ import shutil
 
 from celery.decorators import task
 from django.conf import settings
+from django.db.models import Sum
 
 from storage.models import GenericStorage
 from album.models import Album
@@ -57,7 +58,8 @@ def upload_to_remote_storage(album_pk, filepath):
     # a generator so all iterations occur without resetting anything
     storages = GenericStorage.objects\
                              .exclude(albums__filename=album.filename)\
-                             .order_by('?').iterator()
+                             .annotate(t=Sum('albums__size'))\
+                             .order_by('t').iterator()
     
     # find a storage and then send it there, return the storage where we put it 
     st1 = upload(album, filepath, storages)
